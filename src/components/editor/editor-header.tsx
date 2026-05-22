@@ -79,8 +79,12 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
               variant="ghost"
               size="sm"
               className="h-7 text-[10px] px-2"
-              onClick={() => copyUrl(`${overlayBase}&widget=${w.id}`)}
-              title={`Copiar URL OBS: ${w.id}`}
+              onClick={() =>
+                copyUrl(
+                  appendRoomToPath(`/overlay/${sport}/${w.id}`, room)
+                )
+              }
+              title={`Ruta dedicada: /overlay/${sport}/${w.id}`}
             >
               {w.label}
             </Button>

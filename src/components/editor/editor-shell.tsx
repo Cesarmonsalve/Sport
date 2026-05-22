@@ -7,7 +7,9 @@ import { EditorInspector } from "@/components/editor/editor-inspector";
 import { EditorCanvasPreview } from "@/components/editor/editor-canvas-preview";
 import { EditorHeader } from "@/components/editor/editor-header";
 import { EditorDock } from "@/components/editor/editor-dock";
+import { EditorThemeBar } from "@/components/editor/editor-theme-bar";
 import { useStreamSync } from "@/hooks/use-stream-sync";
+import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { resolveRoom } from "@/lib/sync/room";
 import { useEditorStore } from "@/lib/store/editor-store";
 import type { Sport } from "@/types";
@@ -28,6 +30,7 @@ export function EditorShell({ sport }: EditorShellProps) {
   }, [sport, setSport, searchParams]);
 
   useStreamSync(true, room);
+  useEditorShortcuts();
 
   return (
     <div className="flex h-screen max-w-[100vw] flex-col overflow-hidden bg-background">
@@ -38,6 +41,7 @@ export function EditorShell({ sport }: EditorShellProps) {
         <EditorInspector sport={sport} />
       </div>
       <EditorDock sport={sport} />
+      <EditorThemeBar />
     </div>
   );
 }

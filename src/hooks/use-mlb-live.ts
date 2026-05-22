@@ -28,7 +28,8 @@ export function useMlbLive(events: EspnMlbEvent[]) {
     queryFn: () => fetchMlbSummary(eventId!),
     enabled: !designMode && sport === "mlb" && !!eventId,
     refetchInterval: live ? 5_000 : 20_000,
-    staleTime: 3_000,
+    staleTime: 8_000,
+    gcTime: 120_000,
   });
 
   useEffect(() => {

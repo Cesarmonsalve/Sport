@@ -25,7 +25,8 @@ export function useMlbScoreboard() {
       return isLiveState(sel?.state) ? 12_000 : 30_000;
     },
     enabled: !designMode && sport === "mlb",
-    staleTime: 8_000,
+    staleTime: 12_000,
+    gcTime: 120_000,
   });
 
   const events = query.data ?? ([] as EspnMlbEvent[]);

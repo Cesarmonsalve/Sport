@@ -32,7 +32,8 @@ export function useNbaLive(events: EspnNbaEvent[]) {
     queryFn: () => fetchNbaSummary(eventId!),
     enabled: !designMode && sport === "nba" && !!eventId,
     refetchInterval: live ? 5_000 : 20_000,
-    staleTime: 3_000,
+    staleTime: 8_000,
+    gcTime: 120_000,
   });
 
   useEffect(() => {

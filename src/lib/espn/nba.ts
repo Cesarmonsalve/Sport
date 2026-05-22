@@ -1,4 +1,5 @@
 import { formatTodayEspn } from "@/lib/utils";
+import { espnFetch } from "@/lib/espn/client";
 import { resolveHeadshot } from "@/lib/espn/headshot";
 import type {
   EspnBoxscoreAthlete,
@@ -9,11 +10,6 @@ import type {
   EspnSummaryResponse,
 } from "@/types/espn";
 import type { NbaGameSnapshot, NbaPlayer, NbaRotationEvent } from "@/types";
-
-const NBA_SCOREBOARD =
-  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
-const NBA_SUMMARY =
-  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary";
 
 export interface EspnNbaEvent {
   id: string;
@@ -36,11 +32,17 @@ function parseCompetitor(ev: EspnEvent, side: "home" | "away") {
   };
 }
 
+/** Stable slot key: id, else jersey+team+name */
+export function playerSlotKey(p: NbaPlayer, teamAbbr: string): string {
+  if (p.id && !p.id.startsWith("mock")) return `id:${p.id}`;
+  return `slot:${teamAbbr}:${p.jersey ?? "?"}:${p.name}`;
+}
+
 export async function fetchNbaScoreboard(date?: string): Promise<EspnNbaEvent[]> {
   const dates = date ?? formatTodayEspn();
-  const res = await fetch(`${NBA_SCOREBOARD}?dates=${dates}`, { cache: "no-store" });
-  if (!res.ok) throw new Error("NBA scoreboard fetch failed");
-  const data = (await res.json()) as EspnScoreboardResponse;
+  const data = await espnFetch<EspnScoreboardResponse>("basketball/nba/scoreboard", {
+    dates,
+  });
   return (data.events ?? []).map((ev) => ({
     id: String(ev.id ?? ""),
     name: String(ev.name ?? ""),
@@ -70,9 +72,7 @@ export function eventToNbaSnapshot(
 }
 
 export async function fetchNbaSummary(eventId: string): Promise<EspnSummaryResponse> {
-  const res = await fetch(`${NBA_SUMMARY}?event=${eventId}`, { cache: "no-store" });
-  if (!res.ok) throw new Error("NBA summary fetch failed");
-  return res.json() as Promise<EspnSummaryResponse>;
+  return espnFetch<EspnSummaryResponse>("basketball/nba/summary", { event: eventId });
 }
 
 function athleteToPlayer(row: EspnBoxscoreAthlete, statNames: string[], stats: string[]): NbaPlayer | null {
@@ -95,22 +95,55 @@ function athleteToPlayer(row: EspnBoxscoreAthlete, statNames: string[], stats: s
   };
 }
 
-function extractOnCourt(group: EspnBoxscorePlayerGroup | undefined): NbaPlayer[] {
+function extractOnCourt(
+  group: EspnBoxscorePlayerGroup | undefined,
+  teamAbbr: string
+): NbaPlayer[] {
   const statsBlock = group?.statistics?.[0];
   if (!statsBlock?.athletes?.length) return [];
   const names = statsBlock.names ?? [];
-  const court: NbaPlayer[] = [];
-  for (const row of statsBlock.athletes) {
-    if (row.athlete?.onCourt || row.starter) {
-      const p = athleteToPlayer(row, names, row.stats ?? []);
-      if (p) court.push(p);
-    }
-  }
-  if (court.length >= 5) return court.slice(0, 5);
-  const all = statsBlock.athletes
-    .map((row) => athleteToPlayer(row, names, row.stats ?? []))
+  const minsIdx = names.findIndex((n) => /min/i.test(n));
+
+  const toPlayer = (row: EspnBoxscoreAthlete) =>
+    athleteToPlayer(row, names, row.stats ?? []);
+
+  const onCourt = statsBlock.athletes
+    .filter((row) => row.athlete?.onCourt === true)
+    .map(toPlayer)
     .filter((p): p is NbaPlayer => !!p);
-  return all.slice(0, 5);
+
+  if (onCourt.length >= 5) return onCourt.slice(0, 5);
+
+  const starters = statsBlock.athletes
+    .filter((row) => row.starter && row.active !== false)
+    .map(toPlayer)
+    .filter((p): p is NbaPlayer => !!p);
+
+  if (starters.length >= 5) return starters.slice(0, 5);
+
+  const byMinutes = statsBlock.athletes
+    .map((row) => {
+      const p = toPlayer(row);
+      if (!p) return null;
+      const mins =
+        minsIdx >= 0 ? parseFloat((row.stats ?? [])[minsIdx] ?? "0") || 0 : 0;
+      return { p, mins };
+    })
+    .filter((x): x is { p: NbaPlayer; mins: number } => !!x)
+    .sort((a, b) => b.mins - a.mins)
+    .map((x) => x.p);
+
+  const merged = [...onCourt, ...starters, ...byMinutes];
+  const seen = new Set<string>();
+  const out: NbaPlayer[] = [];
+  for (const p of merged) {
+    const key = playerSlotKey(p, teamAbbr);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+    if (out.length >= 5) break;
+  }
+  return out;
 }
 
 function periodLabel(n?: number): string {
@@ -146,8 +179,8 @@ export function parseNbaSummary(
   const homeGroup = groups.find((g) => g.team?.abbreviation === base.homeAbbr) ?? groups[1];
   const awayGroup = groups.find((g) => g.team?.abbreviation === base.awayAbbr) ?? groups[0];
 
-  const onCourtHome = extractOnCourt(homeGroup);
-  const onCourtAway = extractOnCourt(awayGroup);
+  const onCourtHome = extractOnCourt(homeGroup, base.homeAbbr);
+  const onCourtAway = extractOnCourt(awayGroup, base.awayAbbr);
 
   const allHome = homeGroup?.statistics?.[0]?.athletes ?? [];
   const featured = [...allHome]
@@ -175,6 +208,24 @@ export function parseNbaSummary(
   };
 }
 
+function matchPlayer(
+  p: NbaPlayer,
+  list: NbaPlayer[],
+  abbr: string
+): NbaPlayer | undefined {
+  return (
+    list.find((n) => n.id && p.id && n.id === p.id) ??
+    list.find(
+      (n) =>
+        n.jersey &&
+        p.jersey &&
+        n.jersey === p.jersey &&
+        n.name.split(" ").pop() === p.name.split(" ").pop()
+    ) ??
+    list.find((n) => playerSlotKey(n, abbr) === playerSlotKey(p, abbr))
+  );
+}
+
 export function detectNbaRotation(
   prev: NbaGameSnapshot | null,
   next: NbaGameSnapshot
@@ -182,27 +233,36 @@ export function detectNbaRotation(
   if (!prev) return undefined;
   for (const side of ["home", "away"] as const) {
     const key = side === "home" ? "onCourtHome" : "onCourtAway";
-    const oldIds = new Set((prev[key] ?? []).map((p) => p.id));
+    const abbr = side === "home" ? next.homeAbbr : next.awayAbbr;
+    const oldList = prev[key] ?? [];
     const newList = next[key] ?? [];
-    const added = newList.filter((p) => !oldIds.has(p.id));
-    const removed = (prev[key] ?? []).filter((p) => !newList.some((n) => n.id === p.id));
+    const oldKeys = new Set(oldList.map((p) => playerSlotKey(p, abbr)));
+    const added = newList.filter((p) => !oldKeys.has(playerSlotKey(p, abbr)));
+    const removed = oldList.filter(
+      (p) => !matchPlayer(p, newList, abbr)
+    );
     if (added.length && removed.length) {
-      return {
+      const evt = {
         team: side,
         playerIn: added[0],
         playerOut: removed[0],
         ts: Date.now(),
       };
+      if (typeof window !== "undefined") {
+        console.info(
+          `[Stream Sports] Rotación ${abbr}: ${evt.playerOut.name} → ${evt.playerIn.name}`
+        );
+      }
+      return evt;
     }
   }
   return undefined;
 }
 
 export function onCourtAthleteIds(game: NbaGameSnapshot): string {
-  const ids = [...(game.onCourtHome ?? []), ...(game.onCourtAway ?? [])]
-    .map((p) => p.id)
-    .sort();
-  return ids.join(",");
+  const home = (game.onCourtHome ?? []).map((p) => playerSlotKey(p, game.homeAbbr));
+  const away = (game.onCourtAway ?? []).map((p) => playerSlotKey(p, game.awayAbbr));
+  return [...home, ...away].sort().join(",");
 }
 
 export const NBA_MOCK_GAME: NbaGameSnapshot = {

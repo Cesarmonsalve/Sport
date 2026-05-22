@@ -14,16 +14,14 @@ import { NBA_MOCK_GAME } from "@/lib/espn/nba";
 import { MLB_MOCK_GAME } from "@/lib/espn/mlb";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
 import { MLB_REGISTRY } from "@/lib/registry/mlb";
+import type { ThemeExport } from "@/lib/theme/io";
 
 function defaultPositions(sport: Sport): Record<string, { left: string; top: string }> {
   const reg = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
   const out: Record<string, { left: string; top: string }> = {};
   Object.values(reg).forEach((e) => {
     if (e.defaults?.left || e.defaults?.top) {
-      out[e.id] = {
-        left: e.defaults.left ?? "0",
-        top: e.defaults.top ?? "0",
-      };
+      out[e.id] = { left: e.defaults.left ?? "0", top: e.defaults.top ?? "0" };
     }
   });
   return out;
@@ -33,7 +31,11 @@ function defaultVisibility(sport: Sport): Record<string, boolean> {
   const reg = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
   const out: Record<string, boolean> = {};
   Object.keys(reg).forEach((id) => {
-    out[id] = id.includes("scorebug") || id.includes("scoreboard") || id.startsWith("sb-") || id.startsWith("score-");
+    out[id] =
+      id.includes("scorebug") ||
+      id.includes("scoreboard") ||
+      id.startsWith("sb-") ||
+      id.startsWith("score-");
   });
   if (sport === "nba") {
     out["nba-scorebug"] = true;
@@ -55,6 +57,11 @@ function defaultVisibility(sport: Sport): Record<string, boolean> {
   return out;
 }
 
+function designVisibility(sport: Sport): Record<string, boolean> {
+  const reg = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
+  return Object.fromEntries(Object.keys(reg).map((id) => [id, true]));
+}
+
 interface EditorStore {
   sport: Sport;
   room: string;
@@ -63,10 +70,14 @@ interface EditorStore {
   groupMode: boolean;
   editorMode: EditorMode;
   selectedId: string | null;
+  selectedIds: string[];
   sidebarCollapsed: boolean;
+  snapToGrid: boolean;
   visibility: Record<string, boolean>;
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;
+  textOverrides: Record<string, string>;
+  zIndex: Record<string, number>;
   dirtyIds: string[];
   nbaGame: NbaGameSnapshot;
   mlbGame: MlbGameSnapshot;
@@ -79,15 +90,22 @@ interface EditorStore {
   setEditorMode: (m: EditorMode) => void;
   setGroupMode: (v: boolean) => void;
   setSelectedId: (id: string | null) => void;
+  setSelectedIds: (ids: string[]) => void;
   toggleSidebar: () => void;
+  setSnapToGrid: (v: boolean) => void;
   setVisibility: (id: string, visible: boolean) => void;
   setPosition: (id: string, pos: { left: string; top: string }) => void;
+  nudgePosition: (id: string, dx: number, dy: number) => void;
   setElementStyle: (id: string, style: ElementStyle) => void;
+  setTextOverride: (id: string, text: string) => void;
+  setZIndex: (id: string, z: number) => void;
+  duplicatePosition: (id: string, offset?: { x: number; y: number }) => void;
   applyPreset: (map: Record<string, ElementStyle>) => void;
   setNbaGame: (g: NbaGameSnapshot) => void;
   setMlbGame: (g: MlbGameSnapshot) => void;
   setSyncStatus: (s: string) => void;
   importState: (state: Partial<StreamSportsState>) => void;
+  importTheme: (theme: ThemeExport) => void;
   exportState: () => StreamSportsState;
 }
 
@@ -101,10 +119,14 @@ export const useEditorStore = create<EditorStore>()(
       groupMode: true,
       editorMode: "simple",
       selectedId: null,
+      selectedIds: [],
       sidebarCollapsed: false,
+      snapToGrid: true,
       visibility: defaultVisibility("nba"),
       positions: defaultPositions("nba"),
       elements: {},
+      textOverrides: {},
+      zIndex: {},
       dirtyIds: [],
       nbaGame: NBA_MOCK_GAME,
       mlbGame: MLB_MOCK_GAME,
@@ -116,33 +138,62 @@ export const useEditorStore = create<EditorStore>()(
           visibility: defaultVisibility(sport),
           positions: defaultPositions(sport),
           selectedId: null,
+          selectedIds: [],
         }),
       setRoom: (room) => set({ room }),
       setEventId: (eventId) => set({ eventId }),
       setDesignMode: (designMode) =>
-        set({
+        set((s) => ({
           designMode,
-          nbaGame: designMode ? NBA_MOCK_GAME : get().nbaGame,
-          mlbGame: designMode ? MLB_MOCK_GAME : get().mlbGame,
-        }),
+          visibility: designMode ? designVisibility(s.sport) : defaultVisibility(s.sport),
+          nbaGame: designMode ? NBA_MOCK_GAME : s.nbaGame,
+          mlbGame: designMode ? MLB_MOCK_GAME : s.mlbGame,
+        })),
       setEditorMode: (editorMode) => set({ editorMode }),
       setGroupMode: (groupMode) => set({ groupMode }),
-      setSelectedId: (selectedId) => set({ selectedId }),
+      setSelectedId: (selectedId) =>
+        set({ selectedId, selectedIds: selectedId ? [selectedId] : [] }),
+      setSelectedIds: (selectedIds) =>
+        set({ selectedIds, selectedId: selectedIds[0] ?? null }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
       setVisibility: (id, visible) =>
-        set((s) => ({
-          visibility: { ...s.visibility, [id]: visible },
-        })),
+        set((s) => ({ visibility: { ...s.visibility, [id]: visible } })),
       setPosition: (id, pos) =>
         set((s) => ({
           positions: { ...s.positions, [id]: pos },
           dirtyIds: s.dirtyIds.includes(id) ? s.dirtyIds : [...s.dirtyIds, id],
         })),
+      nudgePosition: (id, dx, dy) => {
+        const s = get();
+        const cur = s.positions[id];
+        const left = (parseFloat(cur?.left ?? "0") || 0) + dx;
+        const top = (parseFloat(cur?.top ?? "0") || 0) + dy;
+        get().setPosition(id, { left: `${left}px`, top: `${top}px` });
+      },
       setElementStyle: (id, style) =>
         set((s) => ({
           elements: { ...s.elements, [id]: { ...s.elements[id], ...style } },
           dirtyIds: s.dirtyIds.includes(id) ? s.dirtyIds : [...s.dirtyIds, id],
         })),
+      setTextOverride: (id, text) =>
+        set((s) => ({
+          textOverrides: { ...s.textOverrides, [id]: text },
+          dirtyIds: s.dirtyIds.includes(id) ? s.dirtyIds : [...s.dirtyIds, id],
+        })),
+      setZIndex: (id, z) =>
+        set((s) => ({
+          zIndex: { ...s.zIndex, [id]: z },
+          elements: { ...s.elements, [id]: { ...s.elements[id], zIndex: String(z) } },
+        })),
+      duplicatePosition: (id, offset = { x: 24, y: 24 }) => {
+        const s = get();
+        const cur = s.positions[id];
+        if (!cur) return;
+        const left = (parseFloat(cur.left) || 0) + offset.x;
+        const top = (parseFloat(cur.top) || 0) + offset.y;
+        get().setPosition(id, { left: `${left}px`, top: `${top}px` });
+      },
       applyPreset: (map) =>
         set((s) => ({
           elements: Object.fromEntries(
@@ -161,6 +212,8 @@ export const useEditorStore = create<EditorStore>()(
           visibility: { ...s.visibility, ...state.visibility },
           positions: { ...s.positions, ...state.positions },
           elements: { ...s.elements, ...state.elements },
+          textOverrides: { ...s.textOverrides, ...state.textOverrides },
+          zIndex: { ...s.zIndex, ...state.zIndex },
           eventId: state.eventId ?? s.eventId,
           nbaGame:
             state.sport === "nba" && state.game
@@ -171,13 +224,24 @@ export const useEditorStore = create<EditorStore>()(
               ? (state.game as MlbGameSnapshot)
               : s.mlbGame,
         })),
+      importTheme: (theme) =>
+        set((s) => ({
+          positions: { ...s.positions, ...theme.positions },
+          elements: { ...s.elements, ...theme.elements },
+          visibility: { ...s.visibility, ...theme.visibility },
+          textOverrides: { ...s.textOverrides, ...theme.textOverrides },
+          zIndex: { ...s.zIndex, ...theme.zIndex },
+          dirtyIds: [
+            ...new Set([
+              ...s.dirtyIds,
+              ...Object.keys(theme.positions),
+              ...Object.keys(theme.elements),
+            ]),
+          ],
+        })),
       exportState: () => {
         const s = get();
         const game = s.sport === "nba" ? s.nbaGame : s.mlbGame;
-        const elements: Record<string, ElementStyle> = {};
-        for (const id of s.dirtyIds) {
-          if (s.elements[id]) elements[id] = s.elements[id];
-        }
         return {
           version: 1 as const,
           sport: s.sport,
@@ -188,7 +252,9 @@ export const useEditorStore = create<EditorStore>()(
           editorMode: s.editorMode,
           visibility: s.visibility,
           positions: s.positions,
-          elements: { ...s.elements, ...elements },
+          elements: s.elements,
+          textOverrides: s.textOverrides,
+          zIndex: s.zIndex,
           game,
           ts: Date.now(),
         };
@@ -202,7 +268,15 @@ export const useEditorStore = create<EditorStore>()(
         positions: s.positions,
         elements: s.elements,
         visibility: s.visibility,
+        textOverrides: s.textOverrides,
+        zIndex: s.zIndex,
+        snapToGrid: s.snapToGrid,
       }),
     }
   )
 );
+
+/** Shallow selectors to reduce re-renders during polling */
+export const selectNbaGame = (s: EditorStore) => s.nbaGame;
+export const selectMlbGame = (s: EditorStore) => s.mlbGame;
+export const selectVisibility = (s: EditorStore) => s.visibility;

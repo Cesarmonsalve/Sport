@@ -17,6 +17,7 @@ export type ElementStyle = Partial<{
   textShadow: string;
   borderRadius: string;
   animation: WidgetAnimation;
+  zIndex: string;
 }>;
 
 export interface StreamSportsState {
@@ -30,6 +31,8 @@ export interface StreamSportsState {
   visibility: Record<string, boolean>;
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;
+  textOverrides?: Record<string, string>;
+  zIndex?: Record<string, number>;
   game?: NbaGameSnapshot | MlbGameSnapshot;
   ts?: number;
 }

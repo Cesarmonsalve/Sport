@@ -1,4 +1,5 @@
 import { formatTodayEspn } from "@/lib/utils";
+import { espnFetch } from "@/lib/espn/client";
 import { resolveHeadshot } from "@/lib/espn/headshot";
 import type {
   EspnAthlete,
@@ -8,11 +9,6 @@ import type {
   EspnSummaryResponse,
 } from "@/types/espn";
 import type { MlbGameSnapshot, MlbLineScore, MlbPlayItem, MlbPlayer } from "@/types";
-
-const MLB_SCOREBOARD =
-  "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard";
-const MLB_SUMMARY =
-  "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary";
 
 export interface EspnMlbEvent {
   id: string;
@@ -37,9 +33,9 @@ function parseSide(ev: EspnEvent, side: "home" | "away") {
 
 export async function fetchMlbScoreboard(date?: string): Promise<EspnMlbEvent[]> {
   const dates = date ?? formatTodayEspn();
-  const res = await fetch(`${MLB_SCOREBOARD}?dates=${dates}`, { cache: "no-store" });
-  if (!res.ok) throw new Error("MLB scoreboard fetch failed");
-  const data = (await res.json()) as EspnScoreboardResponse;
+  const data = await espnFetch<EspnScoreboardResponse>("baseball/mlb/scoreboard", {
+    dates,
+  });
   return (data.events ?? []).map((ev) => ({
     id: String(ev.id ?? ""),
     name: String(ev.name ?? ""),
@@ -65,9 +61,7 @@ export function eventToMlbSnapshot(ev: EspnMlbEvent): MlbGameSnapshot {
 }
 
 export async function fetchMlbSummary(eventId: string): Promise<EspnSummaryResponse> {
-  const res = await fetch(`${MLB_SUMMARY}?event=${eventId}`, { cache: "no-store" });
-  if (!res.ok) throw new Error("MLB summary fetch failed");
-  return res.json() as Promise<EspnSummaryResponse>;
+  return espnFetch<EspnSummaryResponse>("baseball/mlb/summary", { event: eventId });
 }
 
 function athleteToMlbPlayer(a?: EspnAthlete): MlbPlayer | undefined {

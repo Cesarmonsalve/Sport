@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import { MovableLayer } from "@/components/overlay/movable-layer";
 import { shouldShowWidget } from "@/lib/overlay/widget-filter";
@@ -9,7 +10,7 @@ interface Props {
   widgetFilter?: string | null;
 }
 
-export function NbaPlayerCard({ widgetFilter }: Props) {
+export const NbaPlayerCard = memo(function NbaPlayerCard({ widgetFilter }: Props) {
   const game = useEditorStore((s) => s.nbaGame);
   const player = game.featuredPlayer;
   if (!shouldShowWidget(widgetFilter, "card-jugador")) return null;
@@ -54,4 +55,4 @@ export function NbaPlayerCard({ widgetFilter }: Props) {
       </div>
     </MovableLayer>
   );
-}
+});

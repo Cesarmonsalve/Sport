@@ -29,6 +29,10 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
   const mlbGame = useEditorStore((s) => s.mlbGame);
   const setElementStyle = useEditorStore((s) => s.setElementStyle);
   const setVisibility = useEditorStore((s) => s.setVisibility);
+  const setTextOverride = useEditorStore((s) => s.setTextOverride);
+  const setZIndex = useEditorStore((s) => s.setZIndex);
+  const duplicatePosition = useEditorStore((s) => s.duplicatePosition);
+  const textOverrides = useEditorStore((s) => s.textOverrides);
   const applyPreset = useEditorStore((s) => s.applyPreset);
   const editorMode = useEditorStore((s) => s.editorMode);
   const designMode = useEditorStore((s) => s.designMode);
@@ -126,6 +130,36 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
                     </div>
                   </>
                 )}
+                <div className="space-y-2">
+                  <Label>Z-index</Label>
+                  <Input
+                    type="number"
+                    value={style.zIndex ?? ""}
+                    onChange={(e) => {
+                      const z = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(z)) setZIndex(selectedId, z);
+                    }}
+                    placeholder="10"
+                  />
+                </div>
+                {designMode && (
+                  <div className="space-y-2">
+                    <Label>Texto override (diseño)</Label>
+                    <Input
+                      value={textOverrides[selectedId] ?? ""}
+                      onChange={(e) => setTextOverride(selectedId, e.target.value)}
+                      placeholder="Texto personalizado en canvas"
+                    />
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => duplicatePosition(selectedId)}
+                >
+                  Duplicar posición (+24px)
+                </Button>
                 <div className="pt-2">
                   <Label className="mb-2 block">Presets</Label>
                   <div className="flex flex-wrap gap-2">
