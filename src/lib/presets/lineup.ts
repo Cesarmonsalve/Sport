@@ -1,4 +1,4 @@
-import type { LineupPreset, WidgetDisplaySettings } from "@/types";
+import type { WidgetDisplaySettings } from "@/types";
 
 export const LINEUP_PRESETS: Record<
   string,

@@ -104,6 +104,11 @@ export default function SportDashboardPage() {
                 En vivo ({live.length})
               </h2>
               {isLoading && <p className="mt-4 text-xs text-muted-foreground">Cargando ESPN…</p>}
+              {!isLoading && live.length === 0 && (
+                <p className="mt-4 text-xs text-muted-foreground">
+                  Sin partidos en vivo ahora mismo.
+                </p>
+              )}
               <ul className="mt-4 space-y-2">
                 {live.map((ev) => (
                   <GameCard
@@ -118,6 +123,18 @@ export default function SportDashboardPage() {
             </section>
             <section>
               <h2 className="text-sm font-medium text-muted-foreground">Próximos</h2>
+              {!isLoading && upcoming.length === 0 && (
+                <p className="mt-4 text-xs text-muted-foreground">
+                  No hay partidos próximos en el feed. Abre el editor en{" "}
+                  <Link
+                    href={appendRoomToPath(`/editor/${sport}?design=1`, room)}
+                    className="text-primary hover:underline"
+                  >
+                    modo mock
+                  </Link>{" "}
+                  para preparar overlays sin datos en vivo.
+                </p>
+              )}
               <ul className="mt-4 space-y-2">
                 {upcoming.slice(0, 8).map((ev) => (
                   <GameCard

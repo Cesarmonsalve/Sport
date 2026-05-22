@@ -42,7 +42,7 @@ function NumInput({
   );
 }
 
-export function InspectorLayoutTab({ id, style, pos, locked, setStyle, setPos, setLocked }: FieldProps) {
+export function InspectorLayoutTab({ style, pos, locked, setStyle, setPos, setLocked }: FieldProps) {
   return (
     <div className="grid grid-cols-2 gap-2">
       <NumInput label="X" value={pos?.left ?? style.left ?? ""} onChange={(v) => setPos({ left: v })} />
