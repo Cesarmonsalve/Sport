@@ -63,7 +63,56 @@ export function BrandKitPanel() {
             onChange={(e) => setBrandKit({ logoUrl: e.target.value })}
           />
         </div>
-        <Button variant="outline" size="sm" onClick={() => setBrandKit(DEFAULT_BRAND_KIT)}>
+        </div>
+
+        <div className="grid gap-2 pt-4 border-t border-border mt-4">
+          <h3 className="text-xs font-semibold">Fondo del Canvas</h3>
+          <Label className="text-[10px]">Imagen Base (URL)</Label>
+          <Input
+            value={brandKit.backgroundImage ?? ""}
+            onChange={(e) => setBrandKit({ backgroundImage: e.target.value })}
+            placeholder="https://..."
+          />
+          <Label className="text-[10px]">Video de Fondo (URL MP4)</Label>
+          <Input
+            value={brandKit.backgroundVideo ?? ""}
+            onChange={(e) => setBrandKit({ backgroundVideo: e.target.value })}
+            placeholder="https://..."
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-[10px]">Desenfocar (Blur px)</Label>
+              <Input
+                type="number"
+                value={brandKit.backgroundBlur ?? 0}
+                onChange={(e) => setBrandKit({ backgroundBlur: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div>
+              <Label className="text-[10px]">Opacidad (%)</Label>
+              <Input
+                type="number"
+                value={brandKit.backgroundOpacity ?? 100}
+                onChange={(e) => setBrandKit({ backgroundOpacity: parseInt(e.target.value) || 100 })}
+              />
+            </div>
+          </div>
+          <div className="mt-2">
+            <Label className="text-[10px]">Variante de Diseño Global</Label>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+              value={brandKit.globalDesignVariant ?? "default"}
+              onChange={(e) => setBrandKit({ globalDesignVariant: e.target.value as any })}
+            >
+              <option value="default">Por Defecto</option>
+              <option value="glass">Cristal (Glassmorphism)</option>
+              <option value="neon">Neón Gamer</option>
+              <option value="metallic">Metálico Deportivo</option>
+            </select>
+          </div>
+        </div>
+
+        <Button variant="outline" size="sm" onClick={() => setBrandKit(DEFAULT_BRAND_KIT)} className="w-full mt-4">
           Restaurar defaults
         </Button>
       </section>

@@ -90,12 +90,7 @@ export const MovableLayer = memo(function MovableLayer({
       e.preventDefault();
       e.stopPropagation();
       if (id.startsWith("court-") || id.startsWith("field-")) {
-        setDropHighlightId(null);
-        useEditorStore.getState().setRotationNotice(
-          "Arrastra fotos al canvas libre o a quinteto/roster — no a posiciones en cancha"
-        );
-        window.setTimeout(() => useEditorStore.getState().setRotationNotice(null), 3000);
-        return;
+        // Now allowed
       }
       try {
         const player = JSON.parse(raw) as GalleryPlayer;
@@ -208,6 +203,7 @@ export const MovableLayer = memo(function MovableLayer({
     onDragLeave,
     onDrop,
     "data-drop-slot": id,
+    "data-variant": style.designVariant ?? useEditorStore.getState().brandKit.globalDesignVariant ?? "default",
     tabIndex: canDrag ? 0 : undefined,
   };
 

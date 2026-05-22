@@ -43,6 +43,11 @@ export interface BrandKit {
   fontBody: string;
   logoUrl?: string;
   watermarkUrl?: string;
+  backgroundImage?: string;
+  backgroundVideo?: string;
+  backgroundBlur?: number;
+  backgroundOpacity?: number;
+  globalDesignVariant?: "default" | "glass" | "neon" | "metallic";
   sponsorSlots: SponsorSlot[];
 }
 
@@ -163,6 +168,7 @@ export type ElementStyle = Partial<{
   imageUrl: string;
   objectFit: string;
   accentColor: string;
+  designVariant: "default" | "glass" | "neon" | "metallic";
 }>;
 
 export interface ElementDataBinding {

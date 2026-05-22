@@ -82,6 +82,31 @@ export const OverlayCanvas = memo(function OverlayCanvas({
         }
       }}
     >
+      {useEditorStore.getState().brandKit.backgroundVideo && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          style={{
+            opacity: (useEditorStore.getState().brandKit.backgroundOpacity ?? 100) / 100,
+            filter: `blur(${useEditorStore.getState().brandKit.backgroundBlur ?? 0}px)`,
+          }}
+          src={useEditorStore.getState().brandKit.backgroundVideo}
+        />
+      )}
+      {!useEditorStore.getState().brandKit.backgroundVideo && useEditorStore.getState().brandKit.backgroundImage && (
+        <img
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          style={{
+            opacity: (useEditorStore.getState().brandKit.backgroundOpacity ?? 100) / 100,
+            filter: `blur(${useEditorStore.getState().brandKit.backgroundBlur ?? 0}px)`,
+          }}
+          src={useEditorStore.getState().brandKit.backgroundImage}
+          alt=""
+        />
+      )}
       {designMode && (
         <div className="absolute left-1/2 top-2 z-50 -translate-x-1/2 rounded bg-amber-500/20 px-3 py-1 text-xs text-amber-200">
           Doble clic = editar texto · Shift+arrastrar = selección · 8 handles resize

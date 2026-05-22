@@ -6,6 +6,9 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
   accentColor: "#00b8d4",
   fontDisplay: "Barlow Condensed",
   fontBody: "Barlow",
+  backgroundBlur: 0,
+  backgroundOpacity: 100,
+  globalDesignVariant: "default",
   sponsorSlots: [
     {
       id: "sponsor-1",
