@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, type ReactNode, useCallback, useRef } from "react";
-import { motion, type TargetAndTransition } from "framer-motion";
+import { motion, type TargetAndTransition, type Transition } from "framer-motion";
 import { LayerTransformHandles } from "@/components/editor/layer-transform-handles";
 import { elementStyleToCss } from "@/lib/overlay/style-to-css";
 import { useEditorStore } from "@/lib/store/editor-store";
@@ -18,6 +18,28 @@ interface MovableLayerProps {
   editable?: boolean;
   groupParent?: string;
   interactive?: boolean;
+}
+
+const EASING_ALIASES: Record<string, Transition["ease"] | undefined> = {
+  ease: "easeOut",
+  "ease-in": "easeIn",
+  "ease-out": "easeOut",
+  "ease-in-out": "easeInOut",
+  linear: "linear",
+};
+
+function resolveEasing(value: string | undefined): Pick<Transition, "ease" | "type"> {
+  if (!value) return { ease: "easeOut" };
+  if (value === "spring") return { type: "spring" };
+  const cb = value.match(/^cubic-bezier\(([-0-9.\s,]+)\)/);
+  if (cb) {
+    const nums = cb[1]!.split(",").map((n) => parseFloat(n.trim()));
+    if (nums.length === 4 && nums.every((n) => !Number.isNaN(n))) {
+      return { ease: nums as [number, number, number, number] };
+    }
+  }
+  const mapped = EASING_ALIASES[value];
+  return mapped ? { ease: mapped } : { ease: "easeOut" };
 }
 
 const animVariants: Record<
@@ -233,6 +255,8 @@ export const MovableLayer = memo(function MovableLayer({
   };
 
   const animMs = parseInt(style.animationDurationMs ?? "350", 10) || 350;
+  const animDelayMs = parseInt(style.animationDelayMs ?? "0", 10) || 0;
+  const animEasing = resolveEasing(style.animationEasing);
 
   const handles =
     isSelected && interactive && !lockedIds[id] && !streamSafePreview ? (
@@ -260,7 +284,7 @@ export const MovableLayer = memo(function MovableLayer({
       className={cn(shared.className, "relative inline-block")}
       initial={variant.initial}
       animate={variant.animate}
-      transition={{ duration: animMs / 1000 }}
+      transition={{ duration: animMs / 1000, delay: animDelayMs / 1000, ...animEasing }}
     >
       {inner}
     </motion.div>

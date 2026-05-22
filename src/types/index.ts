@@ -66,6 +66,7 @@ export interface SponsorSlot {
   tagline?: string;
   duration: number;
   link?: string;
+  enabled?: boolean;
 }
 
 export interface TickerSlide {
@@ -153,9 +154,12 @@ export type ElementStyle = Partial<{
   fontSize: string;
   fontFamily: string;
   fontWeight: string;
+  fontStyle: string;
   letterSpacing: string;
   lineHeight: string;
   textAlign: string;
+  textTransform: string;
+  textDecoration: string;
   color: string;
   opacity: string;
   backgroundColor: string;
@@ -164,17 +168,21 @@ export type ElementStyle = Partial<{
   borderRadius: string;
   borderColor: string;
   borderWidth: string;
+  borderStyle: string;
   padding: string;
   margin: string;
   gap: string;
+  filter: string;
   animation: WidgetAnimation;
   animationDurationMs?: string;
   animationEasing?: string;
+  animationDelayMs?: string;
   animationTrigger?: string;
   zIndex: string;
   rotate: string;
   imageUrl: string;
   objectFit: string;
+  objectPosition: string;
   accentColor: string;
   designVariant:
     | "default"

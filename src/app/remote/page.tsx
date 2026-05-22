@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Radio } from "lucide-react";
+import { Eye, EyeOff, Radio, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEditorStore } from "@/lib/store/editor-store";
@@ -48,18 +48,28 @@ function RemoteControlInner() {
   );
 
   const bumpScore = (side: "home" | "away", delta: number) => {
+    const clamp = (n: number) => Math.max(0, n);
     if (sport === "nba") {
       setNbaGame({
         ...nbaGame,
-        scoreHome: nbaGame.scoreHome + (side === "home" ? delta : 0),
-        scoreAway: nbaGame.scoreAway + (side === "away" ? delta : 0),
+        scoreHome: clamp(nbaGame.scoreHome + (side === "home" ? delta : 0)),
+        scoreAway: clamp(nbaGame.scoreAway + (side === "away" ? delta : 0)),
       });
     } else {
       setMlbGame({
         ...mlbGame,
-        scoreHome: mlbGame.scoreHome + (side === "home" ? delta : 0),
-        scoreAway: mlbGame.scoreAway + (side === "away" ? delta : 0),
+        scoreHome: clamp(mlbGame.scoreHome + (side === "home" ? delta : 0)),
+        scoreAway: clamp(mlbGame.scoreAway + (side === "away" ? delta : 0)),
       });
+    }
+    publishNow();
+  };
+
+  const resetScore = () => {
+    if (sport === "nba") {
+      setNbaGame({ ...nbaGame, scoreHome: 0, scoreAway: 0 });
+    } else {
+      setMlbGame({ ...mlbGame, scoreHome: 0, scoreAway: 0 });
     }
     publishNow();
   };
@@ -110,18 +120,18 @@ function RemoteControlInner() {
         </p>
       </section>
 
-      <section className="grid grid-cols-2 gap-2 mb-6">
+      <section className="grid grid-cols-2 gap-2 mb-3">
         {[1, 2, 3].map((pts) => (
           <div key={pts} className="contents">
             <Button
-              className="h-16 text-base"
+              className="h-14 text-base"
               variant="outline"
               onClick={() => bumpScore("home", pts)}
             >
               +{pts} HOME
             </Button>
             <Button
-              className="h-16 text-base"
+              className="h-14 text-base"
               variant="outline"
               onClick={() => bumpScore("away", pts)}
             >
@@ -129,6 +139,32 @@ function RemoteControlInner() {
             </Button>
           </div>
         ))}
+      </section>
+
+      <section className="grid grid-cols-3 gap-2 mb-6">
+        <Button
+          variant="ghost"
+          className="h-11 text-sm text-zinc-400"
+          onClick={() => bumpScore("home", -1)}
+        >
+          −1 HOME
+        </Button>
+        <Button
+          variant="ghost"
+          className="h-11 text-sm text-zinc-400 gap-2"
+          onClick={resetScore}
+          title="Reiniciar marcador 0-0"
+        >
+          <RotateCcw className="h-4 w-4" />
+          0-0
+        </Button>
+        <Button
+          variant="ghost"
+          className="h-11 text-sm text-zinc-400"
+          onClick={() => bumpScore("away", -1)}
+        >
+          −1 AWAY
+        </Button>
       </section>
 
       <section className="mb-6">

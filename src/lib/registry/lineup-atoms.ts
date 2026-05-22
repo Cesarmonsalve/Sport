@@ -33,7 +33,6 @@ export function buildQuintetoAtoms(): Record<string, RegistryEntry> {
       });
     }
   }
-  const children = Object.keys(out);
   return out;
 }
 

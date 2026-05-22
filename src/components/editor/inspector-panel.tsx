@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlignCenterHorizontal,
@@ -10,6 +11,7 @@ import {
   Paintbrush,
   Database,
   Sparkles,
+  Play,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -40,13 +42,25 @@ const ANIM_OPTIONS: { value: WidgetAnimation; label: string }[] = [
   { value: "bounce", label: "Bounce" },
 ];
 
-const EASING = ["ease", "ease-in", "ease-out", "ease-in-out", "linear", "spring"];
+const EASING: { value: string; label: string }[] = [
+  { value: "ease", label: "ease" },
+  { value: "ease-in", label: "ease-in" },
+  { value: "ease-out", label: "ease-out" },
+  { value: "ease-in-out", label: "ease-in-out" },
+  { value: "linear", label: "linear" },
+  { value: "spring", label: "spring" },
+  { value: "cubic-bezier(0.34, 1.56, 0.64, 1)", label: "back-out" },
+  { value: "cubic-bezier(0.68, -0.55, 0.27, 1.55)", label: "back-in-out" },
+  { value: "cubic-bezier(0.22, 1, 0.36, 1)", label: "expo-soft" },
+];
 
 interface InspectorPanelProps {
   sport: Sport;
 }
 
 export function InspectorPanel({ sport }: InspectorPanelProps) {
+  const [activeTab, setActiveTab] = useState<"position" | "style" | "data" | "anim">("position");
+  const [previewKey, setPreviewKey] = useState(0);
   const selectedId = useEditorStore((s) => s.selectedId);
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const elements = useEditorStore((s) => s.elements);
@@ -114,7 +128,7 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
             exit={{ opacity: 0, x: 8 }}
             className="flex-1 overflow-y-auto p-4 space-y-2"
           >
-            <Tabs defaultValue="position">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
               <TabsList className="w-full grid grid-cols-4 h-9 bg-zinc-900 border border-zinc-800 p-0.5">
                 <TabsTrigger value="position" className="text-[10px] gap-1 data-[state=active]:bg-zinc-800">
                   <Move className="h-3 w-3" />
@@ -314,7 +328,7 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
                     ))}
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label className="text-[10px]">Duración (ms)</Label>
                     <Input
@@ -327,6 +341,18 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
                     />
                   </div>
                   <div className="space-y-1">
+                    <Label className="text-[10px]">Delay (ms)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5000}
+                      className="h-7 text-xs"
+                      value={style.animationDelayMs ?? ""}
+                      onChange={(e) => patchStyle({ animationDelayMs: e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <Label className="text-[10px]">Easing</Label>
                     <select
                       className="w-full h-8 rounded-md border border-border bg-muted/50 text-xs"
@@ -334,13 +360,29 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
                       onChange={(e) => patchStyle({ animationEasing: e.target.value })}
                     >
                       {EASING.map((e) => (
-                        <option key={e} value={e}>
-                          {e}
+                        <option key={e.value} value={e.value}>
+                          {e.label}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
+                <Button
+                  key={previewKey}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    setVisibility(selectedId, false);
+                    setTimeout(() => {
+                      setVisibility(selectedId, true);
+                      setPreviewKey((k) => k + 1);
+                    }, 80);
+                  }}
+                >
+                  <Play className="h-3.5 w-3.5 mr-1.5" />
+                  Reproducir preview
+                </Button>
                 <div className="space-y-1">
                   <Label className="text-[10px]">Trigger</Label>
                   <select

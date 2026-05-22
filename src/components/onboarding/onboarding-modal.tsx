@@ -34,13 +34,38 @@ export function OnboardingModal() {
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") finish();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const cur = STEPS[step];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
-      <div className="relative max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) finish();
+      }}
+    >
+      <div
+        className="relative max-w-md rounded-xl border border-border bg-card p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
@@ -52,7 +77,9 @@ export function OnboardingModal() {
         <p className="text-[10px] uppercase tracking-widest text-primary">
           Paso {step + 1} / {STEPS.length}
         </p>
-        <h2 className="mt-2 text-lg font-semibold">{cur.title}</h2>
+        <h2 id="onboarding-title" className="mt-2 text-lg font-semibold">
+          {cur.title}
+        </h2>
         <p className="mt-3 text-sm text-muted-foreground">{cur.body}</p>
         <div className="mt-6 flex justify-between gap-2">
           <Button

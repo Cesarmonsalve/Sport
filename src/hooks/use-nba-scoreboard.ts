@@ -3,9 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchNbaScoreboard, type EspnNbaEvent } from "@/lib/espn/nba";
 import { useEditorStore } from "@/lib/store/editor-store";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNbaLive } from "@/hooks/use-nba-live";
 import { loadAppSettings } from "@/lib/settings/app-settings";
+
+const EMPTY_NBA_EVENTS: EspnNbaEvent[] = [];
 
 function isLiveState(state?: string) {
   return state === "in";
@@ -31,7 +33,7 @@ export function useNbaScoreboard() {
     gcTime: 120_000,
   });
 
-  const events = query.data ?? ([] as EspnNbaEvent[]);
+  const events = useMemo(() => query.data ?? EMPTY_NBA_EVENTS, [query.data]);
 
   useEffect(() => {
     if (designMode || !events.length) return;

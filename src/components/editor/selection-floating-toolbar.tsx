@@ -7,6 +7,7 @@ import {
   Copy,
   Layers,
   Redo2,
+  Trash2,
   Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,11 @@ export function SelectionFloatingToolbar() {
   const matchSizeSelection = useEditorStore((s) => s.matchSizeSelection);
   const bringForward = useEditorStore((s) => s.bringForward);
   const sendBackward = useEditorStore((s) => s.sendBackward);
+  const removeFreeElement = useEditorStore((s) => s.removeFreeElement);
+  const setSelectedIds = useEditorStore((s) => s.setSelectedIds);
+  const isFree = useEditorStore((s) =>
+    selectedId ? s.freeElements.some((f) => f.id === selectedId) : false
+  );
   const multi = selectedIds.length >= 2;
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
@@ -128,6 +134,23 @@ export function SelectionFloatingToolbar() {
       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => sendBackward(selectedId)}>
         <Layers className="h-3.5 w-3.5 rotate-180" />
       </Button>
+      {isFree && (
+        <>
+          <span className="w-px h-4 bg-border" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-red-400 hover:text-red-300"
+            onClick={() => {
+              removeFreeElement(selectedId);
+              setSelectedIds([]);
+            }}
+            title="Eliminar elemento (Delete)"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </>
+      )}
     </div>
   );
 }

@@ -92,9 +92,11 @@ export const BroadcastTicker = memo(function BroadcastTicker({
           parseHeadlines(news.data).forEach((h) => out.push(h));
           break;
         case "sponsor":
-          brandKit.sponsorSlots.forEach((s) => {
-            out.push(s.tagline ? `${s.name}: ${s.tagline}` : s.name);
-          });
+          brandKit.sponsorSlots
+            .filter((s) => s.enabled !== false)
+            .forEach((s) => {
+              out.push(s.tagline ? `${s.name}: ${s.tagline}` : s.name);
+            });
           break;
         case "custom":
           if (slide.data?.text) out.push(String(slide.data.text));

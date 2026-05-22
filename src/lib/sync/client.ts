@@ -44,6 +44,7 @@ export class StreamSportsSyncClient {
   private _destroyed = false;
   private _status: SyncStatus = "offline";
   private _syncClearTimer: ReturnType<typeof setTimeout> | null = null;
+  private _storageHandler: ((ev: StorageEvent) => void) | null = null;
   readonly _mqttTopic: string;
 
   constructor(room: string, isPanel: boolean, callbacks: SyncCallbacks, debounceMs = 100) {
@@ -126,11 +127,13 @@ export class StreamSportsSyncClient {
     }
 
     if (typeof window !== "undefined") {
-      window.addEventListener("storage", (ev) => {
+      const handler = (ev: StorageEvent) => {
         if (ev.key === LS_PREFIX + this.room && ev.newValue) {
           this.handleRaw(ev.newValue, "storage");
         }
-      });
+      };
+      this._storageHandler = handler;
+      window.addEventListener("storage", handler);
     }
 
     this._lsPoll = setInterval(() => {
@@ -211,6 +214,10 @@ export class StreamSportsSyncClient {
     if (this._publishTimer) clearTimeout(this._publishTimer);
     if (this._syncClearTimer) clearTimeout(this._syncClearTimer);
     if (this._lsPoll) clearInterval(this._lsPoll);
+    if (this._storageHandler && typeof window !== "undefined") {
+      window.removeEventListener("storage", this._storageHandler);
+    }
+    this._storageHandler = null;
     try {
       this._bc?.close();
     } catch {

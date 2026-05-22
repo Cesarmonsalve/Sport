@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,11 +22,22 @@ import { BrandKitPanel } from "@/components/editor/brand-kit-panel";
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [room, setRoom] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setSettings(loadAppSettings());
     setRoom(getPersistedRoom() || randomRoomId());
   }, []);
+
+  const copyRoom = async () => {
+    try {
+      await navigator.clipboard.writeText(room);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
 
   if (!settings) return null;
 
@@ -58,13 +70,22 @@ export default function SettingsPage() {
           <TabsContent value="general" className="mt-6 space-y-8">
         <section className="space-y-3">
           <Label htmlFor="room">Room ID (MQTT + overlays)</Label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Input
               id="room"
               value={room}
               onChange={(e) => setRoom(e.target.value.toUpperCase())}
-              className="font-mono"
+              className="font-mono flex-1 min-w-[120px]"
             />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={copyRoom}
+              title={copied ? "Copiado" : "Copiar room"}
+              aria-label={copied ? "Room copiado" : "Copiar room"}
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
             <Button
               variant="outline"
               onClick={() => {
@@ -80,6 +101,17 @@ export default function SettingsPage() {
           <p className="text-xs text-muted-foreground">
             Mismo room en editor y todas las fuentes OBS (?room=).
           </p>
+          <div className="flex flex-wrap gap-3 pt-1 text-xs">
+            <Link href={`/remote?room=${room}`} className="text-primary hover:underline">
+              Abrir Remote
+            </Link>
+            <Link href={`/overlay/nba?room=${room}`} className="text-primary hover:underline">
+              Overlay NBA
+            </Link>
+            <Link href={`/overlay/mlb?room=${room}`} className="text-primary hover:underline">
+              Overlay MLB
+            </Link>
+          </div>
         </section>
 
         <section className="space-y-3">
