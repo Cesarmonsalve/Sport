@@ -1,4 +1,5 @@
 import type { RegistryEntry } from "@/types";
+import { MLB_EXTENDED } from "@/lib/registry/mlb-extended";
 
 const entry = (
   id: string,
@@ -60,6 +61,8 @@ export const MLB_REGISTRY: Record<string, RegistryEntry> = {
     defaults: { left: "24px", top: "980px", width: "900px" },
   }),
 };
+
+Object.assign(MLB_REGISTRY, MLB_EXTENDED);
 
 export const MLB_PRESETS = {
   broadcast: {

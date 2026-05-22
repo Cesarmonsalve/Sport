@@ -16,9 +16,21 @@ export type ElementStyle = Partial<{
   backgroundColor: string;
   textShadow: string;
   borderRadius: string;
+  borderColor: string;
   animation: WidgetAnimation;
   zIndex: string;
+  rotate: string;
+  imageUrl: string;
 }>;
+
+/** Maps ESPN athlete to a fixed UI slot without moving layout */
+export interface PlayerSlotBinding {
+  slotId: string;
+  athleteId?: string;
+  team: "home" | "away";
+  slotIndex: number;
+  position?: string;
+}
 
 export interface StreamSportsState {
   version: 1;
@@ -28,11 +40,14 @@ export interface StreamSportsState {
   designMode: boolean;
   groupMode: boolean;
   editorMode: EditorMode;
+  templateId?: string;
+  templateName?: string;
   visibility: Record<string, boolean>;
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;
   textOverrides?: Record<string, string>;
   zIndex?: Record<string, number>;
+  playerSlots?: Record<string, PlayerSlotBinding>;
   game?: NbaGameSnapshot | MlbGameSnapshot;
   ts?: number;
 }

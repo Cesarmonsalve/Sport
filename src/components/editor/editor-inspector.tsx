@@ -130,6 +130,20 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
                     </div>
                   </>
                 )}
+                {editorMode === "advanced" && (
+                  <div className="space-y-2">
+                    <Label>Rotación (deg)</Label>
+                    <Input
+                      value={style.rotate?.replace("deg", "") ?? ""}
+                      onChange={(e) =>
+                        setElementStyle(selectedId, {
+                          rotate: e.target.value ? `${e.target.value}deg` : undefined,
+                        })
+                      }
+                      placeholder="0"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label>Z-index</Label>
                   <Input

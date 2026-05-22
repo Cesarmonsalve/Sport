@@ -1,4 +1,5 @@
 import type { RegistryEntry } from "@/types";
+import { NBA_EXTENDED } from "@/lib/registry/nba-extended";
 
 const entry = (
   id: string,
@@ -78,6 +79,8 @@ export const NBA_REGISTRY: Record<string, RegistryEntry> = {
     defaults: { left: "1200px", top: "720px" },
   }),
 };
+
+Object.assign(NBA_REGISTRY, NBA_EXTENDED);
 
 export const NBA_PRESETS = {
   broadcast: {

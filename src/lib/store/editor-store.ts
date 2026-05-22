@@ -7,9 +7,11 @@ import type {
   ElementStyle,
   MlbGameSnapshot,
   NbaGameSnapshot,
+  PlayerSlotBinding,
   Sport,
   StreamSportsState,
 } from "@/types";
+import type { StreamTemplate } from "@/lib/templates/types";
 import { NBA_MOCK_GAME } from "@/lib/espn/nba";
 import { MLB_MOCK_GAME } from "@/lib/espn/mlb";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
@@ -82,6 +84,13 @@ interface EditorStore {
   nbaGame: NbaGameSnapshot;
   mlbGame: MlbGameSnapshot;
   syncStatus: string;
+  templateId: string;
+  templateName: string;
+  lockedIds: Record<string, boolean>;
+  groups: Record<string, string[]>;
+  playerSlots: Record<string, PlayerSlotBinding>;
+  rotationNotice: string | null;
+  inlineEditId: string | null;
 
   setSport: (s: Sport) => void;
   setRoom: (r: string) => void;
@@ -106,6 +115,18 @@ interface EditorStore {
   setSyncStatus: (s: string) => void;
   importState: (state: Partial<StreamSportsState>) => void;
   importTheme: (theme: ThemeExport) => void;
+  applyStreamTemplate: (t: StreamTemplate) => void;
+  setLocked: (id: string, locked: boolean) => void;
+  bringForward: (id: string) => void;
+  sendBackward: (id: string) => void;
+  resetTransform: (id: string) => void;
+  duplicateElement: (id: string) => void;
+  groupSelection: () => void;
+  ungroupSelection: () => void;
+  showAllWidgets: () => void;
+  setRotationNotice: (msg: string | null) => void;
+  setPlayerSlots: (slots: Record<string, PlayerSlotBinding>) => void;
+  setInlineEditId: (id: string | null) => void;
   exportState: () => StreamSportsState;
 }
 
@@ -131,6 +152,13 @@ export const useEditorStore = create<EditorStore>()(
       nbaGame: NBA_MOCK_GAME,
       mlbGame: MLB_MOCK_GAME,
       syncStatus: "offline",
+      templateId: "broadcast-classic",
+      templateName: "Broadcast clásico",
+      lockedIds: {},
+      groups: {},
+      playerSlots: {},
+      rotationNotice: null,
+      inlineEditId: null,
 
       setSport: (sport) =>
         set({
@@ -159,11 +187,13 @@ export const useEditorStore = create<EditorStore>()(
       setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
       setVisibility: (id, visible) =>
         set((s) => ({ visibility: { ...s.visibility, [id]: visible } })),
-      setPosition: (id, pos) =>
+      setPosition: (id, pos) => {
+        if (get().lockedIds[id]) return;
         set((s) => ({
           positions: { ...s.positions, [id]: pos },
           dirtyIds: s.dirtyIds.includes(id) ? s.dirtyIds : [...s.dirtyIds, id],
-        })),
+        }));
+      },
       nudgePosition: (id, dx, dy) => {
         const s = get();
         const cur = s.positions[id];
@@ -202,6 +232,75 @@ export const useEditorStore = create<EditorStore>()(
           dirtyIds: [...new Set([...s.dirtyIds, ...Object.keys(map)])],
         })),
       setNbaGame: (nbaGame) => set({ nbaGame }),
+      setPlayerSlots: (playerSlots) => set({ playerSlots }),
+      setRotationNotice: (rotationNotice) => set({ rotationNotice }),
+      setInlineEditId: (inlineEditId) => set({ inlineEditId }),
+      applyStreamTemplate: (t) =>
+        set((s) => ({
+          templateId: t.id,
+          templateName: t.name,
+          positions: { ...s.positions, ...t.positions },
+          elements: { ...s.elements, ...t.elements },
+          visibility: { ...s.visibility, ...t.visibility },
+          dirtyIds: [
+            ...new Set([
+              ...s.dirtyIds,
+              ...Object.keys(t.positions),
+              ...Object.keys(t.elements),
+            ]),
+          ],
+        })),
+      setLocked: (id, locked) =>
+        set((s) => ({
+          lockedIds: { ...s.lockedIds, [id]: locked },
+        })),
+      bringForward: (id) => {
+        const z = (get().zIndex[id] ?? 10) + 1;
+        get().setZIndex(id, z);
+      },
+      sendBackward: (id) => {
+        const z = Math.max(0, (get().zIndex[id] ?? 10) - 1);
+        get().setZIndex(id, z);
+      },
+      resetTransform: (id) =>
+        set((s) => ({
+          elements: {
+            ...s.elements,
+            [id]: { ...s.elements[id], rotate: undefined, width: undefined, height: undefined },
+          },
+        })),
+      duplicateElement: (id) => {
+        const s = get();
+        const cur = s.positions[id];
+        if (!cur) return;
+        get().setPosition(id, {
+          left: `${(parseFloat(cur.left) || 0) + 24}px`,
+          top: `${(parseFloat(cur.top) || 0) + 24}px`,
+        });
+      },
+      groupSelection: () => {
+        const ids = get().selectedIds;
+        if (ids.length < 2) return;
+        const gid = `group-${Date.now()}`;
+        set((s) => ({ groups: { ...s.groups, [gid]: ids } }));
+      },
+      ungroupSelection: () => {
+        const sid = get().selectedId;
+        if (!sid) return;
+        set((s) => {
+          const groups = { ...s.groups };
+          for (const [g, ids] of Object.entries(groups)) {
+            if (ids.includes(sid)) delete groups[g];
+          }
+          return { groups };
+        });
+      },
+      showAllWidgets: () =>
+        set((s) => ({
+          visibility: Object.fromEntries(
+            Object.keys(s.visibility).map((k) => [k, true])
+          ),
+        })),
       setMlbGame: (mlbGame) => set({ mlbGame }),
       setSyncStatus: (syncStatus) => set({ syncStatus }),
       importState: (state) =>
@@ -226,11 +325,14 @@ export const useEditorStore = create<EditorStore>()(
         })),
       importTheme: (theme) =>
         set((s) => ({
+          templateId: theme.templateId ?? s.templateId,
+          templateName: theme.templateName ?? s.templateName,
           positions: { ...s.positions, ...theme.positions },
           elements: { ...s.elements, ...theme.elements },
           visibility: { ...s.visibility, ...theme.visibility },
           textOverrides: { ...s.textOverrides, ...theme.textOverrides },
           zIndex: { ...s.zIndex, ...theme.zIndex },
+          playerSlots: { ...s.playerSlots, ...theme.playerSlots },
           dirtyIds: [
             ...new Set([
               ...s.dirtyIds,
@@ -250,7 +352,10 @@ export const useEditorStore = create<EditorStore>()(
           designMode: s.designMode,
           groupMode: s.groupMode,
           editorMode: s.editorMode,
+          templateId: s.templateId,
+          templateName: s.templateName,
           visibility: s.visibility,
+          playerSlots: s.playerSlots,
           positions: s.positions,
           elements: s.elements,
           textOverrides: s.textOverrides,
@@ -271,6 +376,9 @@ export const useEditorStore = create<EditorStore>()(
         textOverrides: s.textOverrides,
         zIndex: s.zIndex,
         snapToGrid: s.snapToGrid,
+        templateId: s.templateId,
+        templateName: s.templateName,
+        playerSlots: s.playerSlots,
       }),
     }
   )

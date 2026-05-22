@@ -102,3 +102,23 @@ body {
 .ss-compound.ss-selected {
   outline: 2px dashed rgba(59, 130, 246, 0.6);
 }
+
+.ss-locked {
+  outline: 1px dashed rgba(251, 191, 36, 0.5);
+}
+
+.ss-accent-home {
+  --slot-accent: #1a5cff;
+}
+.ss-accent-away {
+  --slot-accent: #ff7a00;
+}
+
+.ss-template-streamer-field-nba .ss-court-slot,
+.ss-template-streamer-field-mlb .ss-field-slot {
+  border-color: color-mix(in srgb, var(--slot-accent, #1a5cff) 40%, transparent);
+}
+
+.ss-webcam-frame {
+  box-shadow: 0 0 0 1px rgba(26, 92, 255, 0.35), inset 0 0 40px rgba(0, 0, 0, 0.5);
+}

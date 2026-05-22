@@ -17,11 +17,12 @@ export function EditorThemeBar() {
   const sport = useEditorStore((s) => s.sport);
   const textOverrides = useEditorStore((s) => s.textOverrides);
   const zIndex = useEditorStore((s) => s.zIndex);
+  const playerSlots = useEditorStore((s) => s.playerSlots);
 
   const onExport = () => {
     const state = exportState();
     downloadThemeJson(
-      buildThemeExport(state, `${sport}-layout`, { textOverrides, zIndex })
+      buildThemeExport(state, `${sport}-layout`, { textOverrides, zIndex, playerSlots })
     );
   };
 

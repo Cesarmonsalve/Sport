@@ -5,28 +5,38 @@ export interface ThemeExport {
   name: string;
   exportedAt: string;
   sport: Sport;
+  templateId?: string;
+  templateName?: string;
   positions: StreamSportsState["positions"];
   elements: StreamSportsState["elements"];
   visibility: StreamSportsState["visibility"];
   textOverrides?: Record<string, string>;
   zIndex?: Record<string, number>;
+  playerSlots?: StreamSportsState["playerSlots"];
 }
 
 export function buildThemeExport(
   state: StreamSportsState,
   name: string,
-  extras?: { textOverrides?: Record<string, string>; zIndex?: Record<string, number> }
+  extras?: {
+    textOverrides?: Record<string, string>;
+    zIndex?: Record<string, number>;
+    playerSlots?: StreamSportsState["playerSlots"];
+  }
 ): ThemeExport {
   return {
     version: 1,
     name,
     exportedAt: new Date().toISOString(),
     sport: state.sport,
+    templateId: state.templateId,
+    templateName: state.templateName,
     positions: state.positions,
     elements: state.elements,
     visibility: state.visibility,
     textOverrides: extras?.textOverrides,
     zIndex: extras?.zIndex,
+    playerSlots: extras?.playerSlots ?? state.playerSlots,
   };
 }
 

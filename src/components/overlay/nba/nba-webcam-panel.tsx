@@ -1,0 +1,24 @@
+"use client";
+
+import { memo } from "react";
+import { MovableLayer } from "@/components/overlay/movable-layer";
+import { shouldShowWidget } from "@/lib/overlay/widget-filter";
+
+interface Props {
+  widgetFilter?: string | null;
+}
+
+export const NbaWebcamPanel = memo(function NbaWebcamPanel({ widgetFilter }: Props) {
+  if (!shouldShowWidget(widgetFilter, "webcam-panel")) return null;
+
+  return (
+    <MovableLayer
+      id="webcam-panel"
+      className="ss-webcam-frame ss-accent-home rounded-sm border-2"
+    >
+      <div className="flex h-full w-full items-center justify-center bg-black/90 text-xs text-white/30 uppercase tracking-widest">
+        Webcam / feed
+      </div>
+    </MovableLayer>
+  );
+});

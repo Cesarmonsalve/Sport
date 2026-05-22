@@ -8,6 +8,9 @@ import { EditorCanvasPreview } from "@/components/editor/editor-canvas-preview";
 import { EditorHeader } from "@/components/editor/editor-header";
 import { EditorDock } from "@/components/editor/editor-dock";
 import { EditorThemeBar } from "@/components/editor/editor-theme-bar";
+import { EditorTemplateSelector } from "@/components/editor/editor-template-selector";
+import { EditorContextMenu } from "@/components/editor/editor-context-menu";
+import { RotationToast } from "@/components/editor/rotation-toast";
 import { useStreamSync } from "@/hooks/use-stream-sync";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { resolveRoom } from "@/lib/sync/room";
@@ -40,8 +43,11 @@ export function EditorShell({ sport }: EditorShellProps) {
         <EditorCanvasPreview sport={sport} />
         <EditorInspector sport={sport} />
       </div>
+      <EditorTemplateSelector />
       <EditorDock sport={sport} />
       <EditorThemeBar />
+      <EditorContextMenu />
+      <RotationToast />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   parseNbaSummary,
   type EspnNbaEvent,
 } from "@/lib/espn/nba";
+import { mergeNbaPlayersToSlots } from "@/lib/espn/player-slots";
 import { useEditorStore } from "@/lib/store/editor-store";
 
 function isLiveState(state?: string) {
@@ -21,6 +22,8 @@ export function useNbaLive(events: EspnNbaEvent[]) {
   const designMode = useEditorStore((s) => s.designMode);
   const eventId = useEditorStore((s) => s.eventId);
   const setNbaGame = useEditorStore((s) => s.setNbaGame);
+  const setPlayerSlots = useEditorStore((s) => s.setPlayerSlots);
+  const setRotationNotice = useEditorStore((s) => s.setRotationNotice);
   const prevGameRef = useRef(useEditorStore.getState().nbaGame);
   const prevIdsRef = useRef("");
 
@@ -43,14 +46,22 @@ export function useNbaLive(events: EspnNbaEvent[]) {
       setNbaGame(base);
       return;
     }
-    const parsed = parseNbaSummary(summaryQuery.data, base);
+    let parsed = parseNbaSummary(summaryQuery.data, base);
     const rotation = detectNbaRotation(prevGameRef.current, parsed);
     const ids = onCourtAthleteIds(parsed);
     if (prevIdsRef.current && prevIdsRef.current !== ids && rotation) {
-      parsed.lastRotation = rotation;
+      parsed = { ...parsed, lastRotation: rotation };
+      setRotationNotice(
+        `Rotación ${rotation.team === "home" ? parsed.homeAbbr : parsed.awayAbbr}: ${rotation.playerIn.name}`
+      );
+      window.setTimeout(() => setRotationNotice(null), 4000);
     }
     prevIdsRef.current = ids;
     prevGameRef.current = parsed;
-    setNbaGame(parsed);
-  }, [summaryQuery.data, selected, designMode, setNbaGame]);
+
+    const slots = useEditorStore.getState().playerSlots;
+    const merged = mergeNbaPlayersToSlots(parsed, slots);
+    setPlayerSlots(merged.bindings);
+    setNbaGame(merged.game);
+  }, [summaryQuery.data, selected, designMode, setNbaGame, setPlayerSlots, setRotationNotice]);
 }
