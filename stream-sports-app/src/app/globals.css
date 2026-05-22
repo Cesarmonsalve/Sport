@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: #0a0b0f;
+  --foreground: #e8eaef;
+  --card: #12141a;
+  --card-foreground: #e8eaef;
+  --border: rgba(255, 255, 255, 0.08);
+  --muted: #1a1d26;
+  --muted-foreground: #8b92a5;
+  --accent: #2a2f3d;
+  --accent-foreground: #e8eaef;
+  --primary: #3b82f6;
+  --primary-foreground: #fff;
+  --nba-cyan: #00b8d4;
+  --mlb-gold: #c9a227;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Overlay stream canvas — OBS 1920×1080 */
+.ss-overlay-root {
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  font-family: "Rajdhani", "Geist", sans-serif;
+}
+
+.ss-overlay-root.ss-design-mode {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 39px,
+    rgba(255, 255, 255, 0.03) 39px,
+    rgba(255, 255, 255, 0.03) 40px
+  );
+}
+
+.ss-movable {
+  position: absolute;
+  cursor: default;
+  user-select: none;
+}
+
+.ss-movable.ss-selected {
+  outline: 2px solid rgba(59, 130, 246, 0.8);
+  outline-offset: 2px;
+}
+
+.ss-hidden-widget {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.ss-design-mode .ss-hidden-widget {
+  opacity: 0.35 !important;
+  pointer-events: auto !important;
+}
