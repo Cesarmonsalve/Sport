@@ -101,7 +101,7 @@ export function BrandKitPanel() {
             <select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
               value={brandKit.globalDesignVariant ?? "default"}
-              onChange={(e) => setBrandKit({ globalDesignVariant: e.target.value as any })}
+              onChange={(e) => setBrandKit({ globalDesignVariant: e.target.value as "default" | "glass" | "neon" | "metallic" })}
             >
               <option value="default">Por Defecto</option>
               <option value="glass">Cristal (Glassmorphism)</option>
