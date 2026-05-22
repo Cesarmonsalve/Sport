@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { CollapsiblePlayerGallery } from "@/components/editor/player-gallery-panel";
+import { Input } from "@/components/ui/input";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
 import { MLB_REGISTRY } from "@/lib/registry/mlb";
@@ -38,9 +40,17 @@ export function EditorSidebar({ sport }: EditorSidebarProps) {
   const selectedId = useEditorStore((s) => s.selectedId);
   const setSelectedId = useEditorStore((s) => s.setSelectedId);
   const editorMode = useEditorStore((s) => s.editorMode);
+  const widgetSearch = useEditorStore((s) => s.widgetSearch);
+  const setWidgetSearch = useEditorStore((s) => s.setWidgetSearch);
+  const addFreeElement = useEditorStore((s) => s.addFreeElement);
 
   const roots = Object.values(registry).filter(
-    (e) => !e.parent && (editorMode === "advanced" || e.compound)
+    (e) =>
+      !e.parent &&
+      (editorMode === "advanced" || e.compound) &&
+      (!widgetSearch.trim() ||
+        e.label.toLowerCase().includes(widgetSearch.toLowerCase()) ||
+        e.id.toLowerCase().includes(widgetSearch.toLowerCase()))
   );
 
   const byCat = roots.reduce<Record<string, typeof roots>>((acc, e) => {
@@ -81,6 +91,42 @@ export function EditorSidebar({ sport }: EditorSidebarProps) {
             </button>
           ))}
         </nav>
+      )}
+
+      {!collapsed && <CollapsiblePlayerGallery sport={sport} />}
+
+      {!collapsed && (
+        <div className="border-b border-border p-2 space-y-1">
+          <Input
+            className="h-7 text-xs"
+            placeholder="Buscar widget…"
+            value={widgetSearch}
+            onChange={(e) => setWidgetSearch(e.target.value)}
+          />
+          <div className="flex flex-wrap gap-1">
+            <button
+              type="button"
+              className="text-[9px] rounded px-1.5 py-0.5 bg-muted hover:bg-accent"
+              onClick={() => addFreeElement("free-text")}
+            >
+              + Texto
+            </button>
+            <button
+              type="button"
+              className="text-[9px] rounded px-1.5 py-0.5 bg-muted hover:bg-accent"
+              onClick={() => addFreeElement("free-image")}
+            >
+              + Imagen
+            </button>
+            <button
+              type="button"
+              className="text-[9px] rounded px-1.5 py-0.5 bg-muted hover:bg-accent"
+              onClick={() => addFreeElement("free-rect")}
+            >
+              + Rect
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="flex-1 overflow-y-auto p-2">

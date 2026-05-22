@@ -37,6 +37,10 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
   const moveAsBlock = useEditorStore((s) => s.moveAsBlock);
   const setMoveAsBlock = useEditorStore((s) => s.setMoveAsBlock);
   const syncStatus = useEditorStore((s) => s.syncStatus);
+  const streamSafePreview = useEditorStore((s) => s.streamSafePreview);
+  const setStreamSafePreview = useEditorStore((s) => s.setStreamSafePreview);
+  const snapToElements = useEditorStore((s) => s.snapToElements);
+  const setSnapToElements = useEditorStore((s) => s.setSnapToElements);
 
   const overlayBase = appendRoomToPath(`/overlay/${sport}`, room);
   const widgets = sport === "nba" ? NBA_WIDGETS : MLB_WIDGETS;
@@ -84,6 +88,26 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
           />
           <Label htmlFor="move-block" className="text-xs text-muted-foreground">
             Mover como bloque
+          </Label>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Switch
+            id="stream-safe"
+            checked={streamSafePreview}
+            onCheckedChange={setStreamSafePreview}
+          />
+          <Label htmlFor="stream-safe" className="text-xs text-muted-foreground">
+            Vista OBS
+          </Label>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Switch
+            id="snap-el"
+            checked={snapToElements}
+            onCheckedChange={setSnapToElements}
+          />
+          <Label htmlFor="snap-el" className="text-xs text-muted-foreground">
+            Snap elementos
           </Label>
         </div>
         <div className="flex items-center gap-1.5">

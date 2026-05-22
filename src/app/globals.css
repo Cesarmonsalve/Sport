@@ -159,6 +159,22 @@ body {
   cursor: grabbing;
 }
 
+.ss-stream-safe .ss-selected {
+  outline: none !important;
+}
+
+.ss-stream-safe .ss-bounding-box::after {
+  display: none;
+}
+
+.ss-stream-safe [role="presentation"] {
+  display: none !important;
+}
+
+.ss-player-card {
+  transition: transform 0.15s ease;
+}
+
 .ss-lineup-panel {
   font-size: clamp(10px, 1.2vw, 14px);
 }

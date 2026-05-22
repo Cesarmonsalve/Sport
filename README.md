@@ -77,9 +77,11 @@ Evita CORS en el cliente; el front usa `src/lib/espn/client.ts`.
 ## Editor
 
 - **Edición libre** (header): mueve cualquier hijo del scorebug, quinteto, cancha, etc.
-- **Galería Jugadores** (panel lateral): al elegir partido (`?event=ID`), carga todas las fotos ESPN del boxscore
-  - Arrastra un jugador desde la galería y suéltalo en un slot del canvas (`court-home-pg`, `field-cf`, fila quinteto, etc.)
-  - Muestra etiqueta con nombre asignado en el slot
+- **Galería jugadores** (acordeón en sidebar — colapsada por defecto): fotos ESPN del partido
+  - **Suelta en cualquier punto del canvas** → foto libre movible (`dropped-player-photo`) con etiqueta de nombre
+  - Opcional: suelta sobre una tarjeta/slot para asignar jugador a esa posición
+- **Quinteto / Roster**: cada jugador es una **tarjeta** (no spans sueltos); mueve la tarjeta entera en edición libre
+  - Toggles: foto / nombre / stats · presets: texto, nombre+foto, nombre+stats, completo
 - **Logos automáticos**: al seleccionar partido, logos ESPN en `team-logo-home` / `team-logo-away` y dentro del scorebug
   - Inspector → Datos → fuente **ESPN** (vacía URL manual en Imagen)
 - **Modos lineup** (Inspector → pestaña Vis/Datos con widget quinteto/roster seleccionado):

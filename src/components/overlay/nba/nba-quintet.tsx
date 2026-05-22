@@ -2,10 +2,9 @@
 
 import { memo } from "react";
 import { MovableLayer } from "@/components/overlay/movable-layer";
-import { LineupRow } from "@/components/overlay/shared/lineup-row";
+import { PlayerLineupCard } from "@/components/overlay/shared/player-lineup-card";
 import { shouldShowWidget } from "@/lib/overlay/widget-filter";
 import { useEditorStore, selectNbaGame } from "@/lib/store/editor-store";
-import type { LineupDisplayMode } from "@/types";
 
 interface Props {
   widgetFilter?: string | null;
@@ -14,8 +13,7 @@ interface Props {
 
 export const NbaQuintet = memo(function NbaQuintet({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore(selectNbaGame);
-  const mode =
-    useEditorStore((s) => s.widgetSettings["quinteto-widget"]?.lineupDisplayMode) ?? "full";
+  const widgetSettings = useEditorStore((s) => s.widgetSettings["quinteto-widget"]);
 
   if (!shouldShowWidget(widgetFilter, "quinteto-widget")) return null;
 
@@ -28,7 +26,7 @@ export const NbaQuintet = memo(function NbaQuintet({ widgetFilter, interactive =
   return (
     <MovableLayer
       id="quinteto-widget"
-      className="ss-roster-panel ss-lineup-panel rounded-lg border border-[#1a5cff]/40 bg-black/85 backdrop-blur-md overflow-hidden inline-block"
+      className="ss-lineup-panel rounded-lg border border-[#1a5cff]/40 bg-black/85 backdrop-blur-md overflow-hidden inline-block"
       editable
       interactive={interactive}
     >
@@ -37,17 +35,21 @@ export const NbaQuintet = memo(function NbaQuintet({ widgetFilter, interactive =
           Quinteto · {game.homeAbbr}
         </p>
       </div>
-      <div className="px-2 py-1 max-h-[280px] overflow-hidden">
+      <div
+        className="grid gap-2 p-2"
+        style={{
+          gridTemplateColumns: "repeat(auto-fill, minmax(clamp(80px, 10vw, 130px), 1fr))",
+        }}
+      >
         {home.map((p, i) => (
-          <LineupRow
+          <PlayerLineupCard
             key={p.id}
+            cardId={`q-card-home-${i}`}
             player={p}
             posLabel={p.position ?? positions[i] ?? "—"}
             accent="#1a5cff"
-            mode={mode as LineupDisplayMode}
-            atomPrefix="q"
-            index={i}
-            team="home"
+            widgetId="quinteto-widget"
+            widgetSettings={widgetSettings}
             groupParent="quinteto-widget"
             interactive={interactive}
             sport="nba"
@@ -57,17 +59,21 @@ export const NbaQuintet = memo(function NbaQuintet({ widgetFilter, interactive =
       <div className="px-3 py-2 border-t border-b border-white/10 bg-[#ff7a00]/15">
         <p className="text-[10px] uppercase tracking-widest text-[#ff7a00]">{game.awayAbbr}</p>
       </div>
-      <div className="px-2 py-1">
+      <div
+        className="grid gap-2 p-2"
+        style={{
+          gridTemplateColumns: "repeat(auto-fill, minmax(clamp(80px, 10vw, 130px), 1fr))",
+        }}
+      >
         {away.map((p, i) => (
-          <LineupRow
+          <PlayerLineupCard
             key={p.id}
+            cardId={`q-card-away-${i}`}
             player={p}
             posLabel={p.position ?? positions[i] ?? "—"}
             accent="#ff7a00"
-            mode={mode as LineupDisplayMode}
-            atomPrefix="q"
-            index={i}
-            team="away"
+            widgetId="quinteto-widget"
+            widgetSettings={widgetSettings}
             groupParent="quinteto-widget"
             interactive={interactive}
             sport="nba"

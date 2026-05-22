@@ -3,8 +3,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { OverlayCanvas } from "@/components/overlay/overlay-canvas";
+import { GALLERY_DRAG_MIME } from "@/components/editor/player-gallery-panel";
 import { useEditorStore } from "@/lib/store/editor-store";
-import type { Sport } from "@/types";
+import type { GalleryPlayer, Sport } from "@/types";
 
 const CANVAS_W = 1920;
 const CANVAS_H = 1080;
@@ -27,6 +28,10 @@ interface EditorCanvasPreviewProps {
 
 export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
   const setSelectedIds = useEditorStore((s) => s.setSelectedIds);
+  const placeFreeDrop = useEditorStore((s) => s.placeFreeDrop);
+  const streamSafe = useEditorStore((s) => s.streamSafePreview);
+  const showHints = useEditorStore((s) => s.showEditorHints);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{
     x0: number;
     y0: number;
@@ -37,8 +42,33 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
 
   const scale = useMemo(() => {
     if (typeof window === "undefined") return 0.5;
-    const maxW = Math.min(960, window.innerWidth - 520);
+    const maxW = Math.min(1100, window.innerWidth - 480);
     return Math.min(maxW / CANVAS_W, 0.55);
+  }, []);
+
+  const onCanvasDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const raw = e.dataTransfer.getData(GALLERY_DRAG_MIME);
+      if (!raw || !canvasRef.current) return;
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / scale;
+      const y = (e.clientY - rect.top) / scale;
+      try {
+        const player = JSON.parse(raw) as GalleryPlayer;
+        placeFreeDrop(player, Math.max(0, x - 48), Math.max(0, y - 48));
+      } catch {
+        /* ignore */
+      }
+    },
+    [placeFreeDrop, scale]
+  );
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes(GALLERY_DRAG_MIME)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
   }, []);
 
   const onPointerDown = useCallback(
@@ -92,7 +122,12 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
     : null;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center overflow-hidden bg-[#06070a] p-6">
+    <div className="flex flex-1 flex-col items-center justify-center overflow-hidden bg-[#06070a] p-4">
+      {showHints && (
+        <p className="mb-2 max-w-lg text-center text-[10px] text-muted-foreground">
+          Galería colapsable en sidebar · suelta foto en cualquier punto del canvas · Ctrl+Z deshacer
+        </p>
+      )}
       <motion.div
         layout
         className="relative rounded-lg border border-border shadow-2xl"
@@ -100,10 +135,18 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
         onPointerDown={onPointerDown}
       >
         <div
+          ref={canvasRef}
           className="relative overflow-hidden rounded-lg bg-black/40"
           style={{ width: CANVAS_W * scale, height: CANVAS_H * scale }}
+          onDrop={onCanvasDrop}
+          onDragOver={onDragOver}
         >
-          <OverlayCanvas sport={sport} scale={scale} interactive />
+          <OverlayCanvas
+            sport={sport}
+            scale={scale}
+            interactive
+            streamSafePreview={streamSafe}
+          />
         </div>
         {selBox && (
           <div
@@ -112,7 +155,7 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
           />
         )}
         <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] text-muted-foreground">
-          Shift+arrastrar · multi-select · P panel · Del ocultar · G snap 8px
+          Suelta foto libre · Shift+box · Ctrl+Z/Y undo
         </div>
       </motion.div>
     </div>

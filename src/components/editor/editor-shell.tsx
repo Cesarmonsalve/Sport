@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { EditorSidebar } from "@/components/editor/editor-sidebar";
-import { PlayerGalleryPanel } from "@/components/editor/player-gallery-panel";
 import { EditorInspector } from "@/components/editor/editor-inspector";
 import { EditorCanvasPreview } from "@/components/editor/editor-canvas-preview";
 import { EditorHeader } from "@/components/editor/editor-header";
@@ -12,6 +11,7 @@ import { EditorThemeBar } from "@/components/editor/editor-theme-bar";
 import { EditorTemplateSelector } from "@/components/editor/editor-template-selector";
 import { EditorContextMenu } from "@/components/editor/editor-context-menu";
 import { RotationToast } from "@/components/editor/rotation-toast";
+import { SelectionFloatingToolbar } from "@/components/editor/selection-floating-toolbar";
 import { useStreamSync } from "@/hooks/use-stream-sync";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { resolveRoom } from "@/lib/sync/room";
@@ -48,7 +48,6 @@ export function EditorShell({ sport }: EditorShellProps) {
       <EditorHeader sport={sport} room={room} />
       <div className="flex min-h-0 flex-1">
         <EditorSidebar sport={sport} />
-        <PlayerGalleryPanel sport={sport} />
         <EditorCanvasPreview sport={sport} />
         <EditorInspector sport={sport} />
       </div>
@@ -57,6 +56,7 @@ export function EditorShell({ sport }: EditorShellProps) {
       <EditorThemeBar />
       <EditorContextMenu />
       <RotationToast />
+      <SelectionFloatingToolbar />
     </div>
   );
 }

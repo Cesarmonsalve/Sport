@@ -11,6 +11,7 @@ import { NbaWebcamPanel } from "@/components/overlay/nba/nba-webcam-panel";
 import { NbaSocialFooter } from "@/components/overlay/nba/nba-social-footer";
 import { TeamLogoLayer } from "@/components/overlay/team-logo-layer";
 import { ScoreConfetti } from "@/components/overlay/score-confetti";
+import { FreeCanvasLayer } from "@/components/overlay/free-canvas-layer";
 import { MlbScoreboard } from "@/components/overlay/mlb/mlb-scoreboard";
 import { MlbLineScore } from "@/components/overlay/mlb/mlb-line-score";
 import { MlbBases } from "@/components/overlay/mlb/mlb-bases";
@@ -28,6 +29,7 @@ interface OverlayCanvasProps {
   scale?: number;
   interactive?: boolean;
   widgetFilter?: string | null;
+  streamSafePreview?: boolean;
 }
 
 export const OverlayCanvas = memo(function OverlayCanvas({
@@ -35,6 +37,7 @@ export const OverlayCanvas = memo(function OverlayCanvas({
   scale = 1,
   interactive = true,
   widgetFilter: widgetProp,
+  streamSafePreview = false,
 }: OverlayCanvasProps) {
   const searchParams = useSearchParams();
   const widget = widgetProp ?? searchParams.get("widget");
@@ -47,7 +50,8 @@ export const OverlayCanvas = memo(function OverlayCanvas({
         "ss-overlay-root origin-top-left",
         `ss-template-${templateId}`,
         designMode && "ss-design-mode",
-        interactive && designMode && "ss-design-editable"
+        interactive && designMode && "ss-design-editable",
+        streamSafePreview && "ss-stream-safe"
       )}
       style={{
         transform: `scale(${scale})`,
@@ -66,6 +70,7 @@ export const OverlayCanvas = memo(function OverlayCanvas({
         </div>
       )}
       <ScoreConfetti />
+      <FreeCanvasLayer interactive={interactive} />
       {sport === "nba" && (
         <>
           <TeamLogoLayer id="team-logo-home" side="home" interactive={interactive} widgetFilter={widget} />

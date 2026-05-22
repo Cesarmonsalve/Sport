@@ -15,12 +15,37 @@ export function useEditorShortcuts() {
   const groupSelection = useEditorStore((s) => s.groupSelection);
   const ungroupSelection = useEditorStore((s) => s.ungroupSelection);
   const showAllWidgets = useEditorStore((s) => s.showAllWidgets);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
+  const copyStyleFromSelection = useEditorStore((s) => s.copyStyleFromSelection);
+  const pasteStyleToSelection = useEditorStore((s) => s.pasteStyleToSelection);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       const mod = e.ctrlKey || e.metaKey;
+
+      if (mod && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      if (mod && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (mod && e.key === "c" && e.shiftKey) {
+        e.preventDefault();
+        copyStyleFromSelection();
+        return;
+      }
+      if (mod && e.key === "v" && e.shiftKey) {
+        e.preventDefault();
+        pasteStyleToSelection();
+        return;
+      }
 
       if (e.key === "p" || e.key === "P") {
         if (!mod) toggleSidebar();
@@ -100,5 +125,9 @@ export function useEditorShortcuts() {
     groupSelection,
     ungroupSelection,
     showAllWidgets,
+    undo,
+    redo,
+    copyStyleFromSelection,
+    pasteStyleToSelection,
   ]);
 }

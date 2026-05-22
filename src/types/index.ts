@@ -6,6 +6,7 @@ export type WidgetAnimation = "none" | "fade" | "slide";
 
 export type DataSource = "espn" | "manual";
 
+/** @deprecated use lineupPreset + show* flags */
 export type LineupDisplayMode =
   | "text-only"
   | "photo-text"
@@ -14,11 +15,39 @@ export type LineupDisplayMode =
   | "full"
   | "photo-only";
 
+export type LineupPreset = "text-only" | "name-photo" | "name-stats" | "full";
+
 export type MarkerStyle = "photo" | "initials" | "dot" | "name";
 
 export interface WidgetDisplaySettings {
-  lineupDisplayMode?: LineupDisplayMode;
+  lineupPreset?: LineupPreset;
+  /** @deprecated */ lineupDisplayMode?: LineupDisplayMode;
+  showPhoto?: boolean;
+  showStats?: boolean;
+  showName?: boolean;
   markerStyle?: MarkerStyle;
+  markerShowPhoto?: boolean;
+}
+
+export type FreeElementType =
+  | "dropped-player-photo"
+  | "free-image"
+  | "free-text"
+  | "free-rect";
+
+export interface FreeCanvasElement {
+  id: string;
+  type: FreeElementType;
+  left: string;
+  top: string;
+  width?: string;
+  height?: string;
+  imageUrl?: string;
+  label?: string;
+  text?: string;
+  fontSize?: string;
+  backgroundColor?: string;
+  athleteId?: string;
 }
 
 export interface GalleryPlayer {
@@ -110,6 +139,8 @@ export interface StreamSportsState {
   widgetSettings?: Record<string, WidgetDisplaySettings>;
   confettiEnabled?: boolean;
   galleryPlayers?: GalleryPlayer[];
+  freeElements?: FreeCanvasElement[];
+  streamSafePreview?: boolean;
   game?: NbaGameSnapshot | MlbGameSnapshot;
   ts?: number;
 }

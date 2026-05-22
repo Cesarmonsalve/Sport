@@ -1,10 +1,9 @@
 "use client";
 
 import { MovableLayer } from "@/components/overlay/movable-layer";
-import { LineupRow } from "@/components/overlay/shared/lineup-row";
+import { PlayerLineupCard } from "@/components/overlay/shared/player-lineup-card";
 import { shouldShowWidget } from "@/lib/overlay/widget-filter";
 import { useEditorStore, selectMlbGame } from "@/lib/store/editor-store";
-import type { LineupDisplayMode } from "@/types";
 
 interface Props {
   widgetFilter?: string | null;
@@ -13,8 +12,7 @@ interface Props {
 
 export function MlbRoster({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore(selectMlbGame);
-  const mode =
-    useEditorStore((s) => s.widgetSettings["roster-widget"]?.lineupDisplayMode) ?? "photo-text";
+  const widgetSettings = useEditorStore((s) => s.widgetSettings["roster-widget"]);
 
   if (!shouldShowWidget(widgetFilter, "roster-widget")) return null;
 
@@ -29,42 +27,44 @@ export function MlbRoster({ widgetFilter, interactive = false }: Props) {
       editable
       interactive={interactive}
     >
-      <div className="flex flex-col min-w-[140px]">
-        <p className="mb-1 text-[10px] uppercase tracking-wider text-white/50">{game.awayAbbr}</p>
-        {away.slice(0, 12).map((p, i) => (
-          <LineupRow
-            key={p.id}
-            player={p}
-            posLabel={p.position ?? "—"}
-            accent="#ff7a00"
-            mode={mode as LineupDisplayMode}
-            atomPrefix="roster"
-            index={i}
-            team="away"
-            groupParent="roster-widget"
-            interactive={interactive}
-            sport="mlb"
-          />
-        ))}
+      <div className="flex flex-col gap-2 min-w-[clamp(100px,12vw,160px)]">
+        <p className="text-[10px] uppercase tracking-wider text-white/50">{game.awayAbbr}</p>
+        <div className="grid gap-2" style={{ gridTemplateColumns: "1fr" }}>
+          {away.slice(0, 12).map((p, i) => (
+            <PlayerLineupCard
+              key={p.id}
+              cardId={`roster-card-away-${i}`}
+              player={p}
+              posLabel={p.position ?? "—"}
+              accent="#ff7a00"
+              widgetId="roster-widget"
+              widgetSettings={widgetSettings}
+              groupParent="roster-widget"
+              interactive={interactive}
+              sport="mlb"
+            />
+          ))}
+        </div>
       </div>
-      <div className="w-px bg-white/10" />
-      <div className="flex flex-col min-w-[140px]">
-        <p className="mb-1 text-[10px] uppercase tracking-wider text-white/50">{game.homeAbbr}</p>
-        {home.slice(0, 12).map((p, i) => (
-          <LineupRow
-            key={p.id}
-            player={p}
-            posLabel={p.position ?? "—"}
-            accent="#1a5cff"
-            mode={mode as LineupDisplayMode}
-            atomPrefix="roster"
-            index={i}
-            team="home"
-            groupParent="roster-widget"
-            interactive={interactive}
-            sport="mlb"
-          />
-        ))}
+      <div className="w-px bg-white/10 shrink-0" />
+      <div className="flex flex-col gap-2 min-w-[clamp(100px,12vw,160px)]">
+        <p className="text-[10px] uppercase tracking-wider text-white/50">{game.homeAbbr}</p>
+        <div className="grid gap-2" style={{ gridTemplateColumns: "1fr" }}>
+          {home.slice(0, 12).map((p, i) => (
+            <PlayerLineupCard
+              key={p.id}
+              cardId={`roster-card-home-${i}`}
+              player={p}
+              posLabel={p.position ?? "—"}
+              accent="#1a5cff"
+              widgetId="roster-widget"
+              widgetSettings={widgetSettings}
+              groupParent="roster-widget"
+              interactive={interactive}
+              sport="mlb"
+            />
+          ))}
+        </div>
       </div>
     </MovableLayer>
   );

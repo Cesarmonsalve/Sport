@@ -1,46 +1,71 @@
-import type { LineupDisplayMode, MarkerStyle, WidgetDisplaySettings } from "@/types";
+import type { LineupPreset, WidgetDisplaySettings } from "@/types";
 
 export const LINEUP_PRESETS: Record<
   string,
-  { label: string; widgetSettings: Record<string, WidgetDisplaySettings>; elements?: Record<string, { fontSize?: string }> }
+  {
+    label: string;
+    widgetSettings: Record<string, WidgetDisplaySettings>;
+    elements?: Record<string, { fontSize?: string }>;
+  }
 > = {
   "lineup-minimal-text": {
-    label: "Lineup · texto mínimo",
+    label: "Tarjetas · texto",
     widgetSettings: {
-      "quinteto-widget": { lineupDisplayMode: "text-only" },
-      "roster-widget": { lineupDisplayMode: "text-only" },
-      "court-positions-widget": { markerStyle: "initials" },
-      "field-positions-widget": { markerStyle: "initials" },
-    },
-    elements: {
-      "quinteto-widget": { fontSize: "11px" },
+      "quinteto-widget": {
+        lineupPreset: "text-only",
+        showPhoto: false,
+        showStats: false,
+        showName: true,
+      },
+      "roster-widget": {
+        lineupPreset: "text-only",
+        showPhoto: false,
+        showStats: false,
+        showName: true,
+      },
+      "court-positions-widget": { markerStyle: "initials", markerShowPhoto: false },
+      "field-positions-widget": { markerStyle: "initials", markerShowPhoto: false },
     },
   },
   "lineup-broadcast-photos": {
-    label: "Lineup · broadcast fotos",
+    label: "Tarjetas · foto+nombre",
     widgetSettings: {
-      "quinteto-widget": { lineupDisplayMode: "photo-text" },
-      "roster-widget": { lineupDisplayMode: "photo-text" },
-      "court-positions-widget": { markerStyle: "photo" },
-      "field-positions-widget": { markerStyle: "photo" },
+      "quinteto-widget": {
+        lineupPreset: "name-photo",
+        showPhoto: true,
+        showStats: false,
+        showName: true,
+      },
+      "roster-widget": {
+        lineupPreset: "name-photo",
+        showPhoto: true,
+        showStats: false,
+        showName: true,
+      },
+      "court-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
+      "field-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
     },
   },
   "lineup-stats-heavy": {
-    label: "Lineup · stats pesado",
+    label: "Tarjetas · completas",
     widgetSettings: {
-      "quinteto-widget": { lineupDisplayMode: "full" },
-      "roster-widget": { lineupDisplayMode: "text-stats" },
-      "court-positions-widget": { markerStyle: "name" },
-      "field-positions-widget": { markerStyle: "name" },
+      "quinteto-widget": {
+        lineupPreset: "full",
+        showPhoto: true,
+        showStats: true,
+        showName: true,
+      },
+      "roster-widget": {
+        lineupPreset: "name-stats",
+        showPhoto: false,
+        showStats: true,
+        showName: true,
+      },
+      "court-positions-widget": { markerStyle: "name", markerShowPhoto: false },
+      "field-positions-widget": { markerStyle: "name", markerShowPhoto: false },
     },
     elements: {
       "quinteto-widget": { fontSize: "12px" },
     },
   },
 };
-
-export function applyLineupPreset(id: keyof typeof LINEUP_PRESETS) {
-  return LINEUP_PRESETS[id];
-}
-
-export type { LineupDisplayMode, MarkerStyle };

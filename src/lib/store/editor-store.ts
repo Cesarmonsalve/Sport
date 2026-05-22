@@ -13,7 +13,9 @@ import type {
   Sport,
   StreamSportsState,
   WidgetDisplaySettings,
+  FreeCanvasElement,
 } from "@/types";
+import { captureHistorySnap, MAX_HISTORY, type EditorHistorySnap } from "@/lib/store/history";
 import { galleryFromMlbGame, galleryFromNbaGame } from "@/lib/espn/gallery";
 import { preloadTeamLogos } from "@/lib/espn/logos";
 import { LINEUP_PRESETS } from "@/lib/presets/lineup";
@@ -105,6 +107,14 @@ interface EditorStore {
   galleryPlayers: GalleryPlayer[];
   confettiEnabled: boolean;
   dropHighlightId: string | null;
+  freeElements: FreeCanvasElement[];
+  streamSafePreview: boolean;
+  snapToElements: boolean;
+  copiedStyle: ElementStyle | null;
+  widgetSearch: string;
+  showEditorHints: boolean;
+  _history: EditorHistorySnap[];
+  _historyIndex: number;
 
   setSport: (s: Sport) => void;
   setRoom: (r: string) => void;
@@ -153,15 +163,43 @@ interface EditorStore {
   setConfettiEnabled: (v: boolean) => void;
   setDropHighlightId: (id: string | null) => void;
   syncTeamLogosFromGame: () => void;
+  pushHistory: () => void;
+  undo: () => void;
+  redo: () => void;
+  placeFreeDrop: (player: GalleryPlayer, x: number, y: number) => string;
+  addFreeElement: (type: FreeCanvasElement["type"], at?: { left: number; top: number }) => string;
+  removeFreeElement: (id: string) => void;
+  setStreamSafePreview: (v: boolean) => void;
+  setSnapToElements: (v: boolean) => void;
+  copyStyleFromSelection: () => void;
+  pasteStyleToSelection: () => void;
+  alignSelection: (mode: "left" | "center" | "right" | "top" | "middle") => void;
+  setWidgetSearch: (q: string) => void;
+  dismissEditorHints: () => void;
   exportState: () => StreamSportsState;
 }
 
 const DEFAULT_WIDGET_SETTINGS: Record<string, WidgetDisplaySettings> = {
-  "quinteto-widget": { lineupDisplayMode: "full" },
-  "roster-widget": { lineupDisplayMode: "photo-text" },
-  "court-positions-widget": { markerStyle: "photo" },
-  "field-positions-widget": { markerStyle: "photo" },
+  "quinteto-widget": { lineupPreset: "full" },
+  "roster-widget": { lineupPreset: "name-photo" },
+  "court-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
+  "field-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
 };
+
+function applyHistorySnap(
+  set: (partial: Partial<EditorStore>) => void,
+  snap: EditorHistorySnap
+) {
+  set({
+    positions: snap.positions,
+    elements: snap.elements,
+    visibility: snap.visibility,
+    freeElements: snap.freeElements,
+    textOverrides: snap.textOverrides,
+    zIndex: snap.zIndex,
+    dataBindings: snap.dataBindings,
+  });
+}
 
 export const useEditorStore = create<EditorStore>()(
   persist(
@@ -200,6 +238,157 @@ export const useEditorStore = create<EditorStore>()(
       galleryPlayers: [],
       confettiEnabled: false,
       dropHighlightId: null,
+      freeElements: [],
+      streamSafePreview: false,
+      snapToElements: true,
+      copiedStyle: null,
+      widgetSearch: "",
+      showEditorHints: true,
+      _history: [captureHistorySnap({
+        positions: defaultPositions("nba"),
+        elements: {},
+        visibility: defaultVisibility("nba"),
+        freeElements: [],
+        textOverrides: {},
+        zIndex: {},
+        dataBindings: {},
+      })],
+      _historyIndex: 0,
+
+      pushHistory: () => {
+        const snap = captureHistorySnap(get());
+        set((s) => {
+          const branch = s._history.slice(0, s._historyIndex + 1);
+          const next = [...branch, snap].slice(-MAX_HISTORY);
+          return { _history: next, _historyIndex: next.length - 1 };
+        });
+      },
+      undo: () => {
+        const s = get();
+        if (s._historyIndex <= 0) return;
+        const idx = s._historyIndex - 1;
+        applyHistorySnap(set, s._history[idx]!);
+        set({ _historyIndex: idx });
+      },
+      redo: () => {
+        const s = get();
+        if (s._historyIndex >= s._history.length - 1) return;
+        const idx = s._historyIndex + 1;
+        applyHistorySnap(set, s._history[idx]!);
+        set({ _historyIndex: idx });
+      },
+      placeFreeDrop: (player, x, y) => {
+        get().pushHistory();
+        const id = `dropped-photo-${Date.now().toString(36).slice(-5)}`;
+        const label = `${player.name}${player.jersey ? ` #${player.jersey}` : ""}`;
+        const el: FreeCanvasElement = {
+          id,
+          type: "dropped-player-photo",
+          left: `${Math.round(x)}px`,
+          top: `${Math.round(y)}px`,
+          width: "96px",
+          height: "96px",
+          imageUrl: player.headshot,
+          label,
+          athleteId: player.id,
+        };
+        set((s) => ({
+          freeElements: [...s.freeElements, el],
+          positions: { ...s.positions, [id]: { left: el.left, top: el.top } },
+          visibility: { ...s.visibility, [id]: true },
+          elements: {
+            ...s.elements,
+            [id]: { width: el.width, height: el.height },
+          },
+          selectedId: id,
+          selectedIds: [id],
+        }));
+        return id;
+      },
+      addFreeElement: (type, at) => {
+        get().pushHistory();
+        const id = `free-${type}-${Date.now().toString(36).slice(-4)}`;
+        const left = `${at?.left ?? 400}px`;
+        const top = `${at?.top ?? 300}px`;
+        const el: FreeCanvasElement = {
+          id,
+          type,
+          left,
+          top,
+          width: type === "free-text" ? undefined : "120px",
+          height: type === "free-text" ? undefined : "80px",
+          text: type === "free-text" ? "Nuevo texto" : undefined,
+        };
+        set((s) => ({
+          freeElements: [...s.freeElements, el],
+          positions: { ...s.positions, [id]: { left, top } },
+          visibility: { ...s.visibility, [id]: true },
+          selectedId: id,
+        }));
+        return id;
+      },
+      removeFreeElement: (id) => {
+        get().pushHistory();
+        set((s) => ({
+          freeElements: s.freeElements.filter((e) => e.id !== id),
+        }));
+      },
+      setStreamSafePreview: (streamSafePreview) => set({ streamSafePreview }),
+      setSnapToElements: (snapToElements) => set({ snapToElements }),
+      copyStyleFromSelection: () => {
+        const id = get().selectedId;
+        if (!id) return;
+        set({ copiedStyle: { ...get().elements[id] } });
+      },
+      pasteStyleToSelection: () => {
+        const style = get().copiedStyle;
+        const id = get().selectedId;
+        if (!style || !id) return;
+        get().pushHistory();
+        get().setElementStyle(id, style);
+      },
+      alignSelection: (mode) => {
+        const ids = (
+          get().selectedIds.length
+            ? get().selectedIds
+            : get().selectedId
+              ? [get().selectedId]
+              : []
+        ).filter((id): id is string => Boolean(id));
+        if (ids.length < 2) return;
+        get().pushHistory();
+        const rects = ids.map((id) => {
+          const p = get().positions[id];
+          const st = get().elements[id];
+          const w = parseFloat(st?.width ?? "100") || 100;
+          const h = parseFloat(st?.height ?? "64") || 64;
+          return {
+            id,
+            left: parseFloat(p?.left ?? "0") || 0,
+            top: parseFloat(p?.top ?? "0") || 0,
+            w,
+            h,
+          };
+        });
+        const minL = Math.min(...rects.map((r) => r.left));
+        const maxR = Math.max(...rects.map((r) => r.left + r.w));
+        const minT = Math.min(...rects.map((r) => r.top));
+        const maxB = Math.max(...rects.map((r) => r.top + r.h));
+        const midX = (minL + maxR) / 2;
+        const midY = (minT + maxB) / 2;
+        for (const r of rects) {
+          let left = r.left;
+          let top = r.top;
+          if (mode === "left") left = minL;
+          if (mode === "right") left = maxR - r.w;
+          if (mode === "center") left = midX - r.w / 2;
+          if (mode === "top") top = minT;
+          if (mode === "middle") top = midY - r.h / 2;
+          get().setPosition(r.id, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
+        }
+      },
+      setWidgetSearch: (widgetSearch) => set({ widgetSearch }),
+      dismissEditorHints: () => set({ showEditorHints: false }),
 
       setSport: (sport) =>
         set({
@@ -258,6 +447,8 @@ export const useEditorStore = create<EditorStore>()(
         set((s) => ({ visibility: { ...s.visibility, [id]: visible } })),
       setPosition: (id, pos) => {
         if (get().lockedIds[id]) return;
+        const prev = get().positions[id];
+        if (prev?.left === pos.left && prev?.top === pos.top) return;
         set((s) => ({
           positions: { ...s.positions, [id]: pos },
           dirtyIds: s.dirtyIds.includes(id) ? s.dirtyIds : [...s.dirtyIds, id],
@@ -473,7 +664,9 @@ export const useEditorStore = create<EditorStore>()(
           userTouchedElements: state.userTouchedElements ?? s.userTouchedElements,
           widgetSettings: { ...s.widgetSettings, ...state.widgetSettings },
           galleryPlayers: state.galleryPlayers ?? s.galleryPlayers,
+          freeElements: state.freeElements ?? s.freeElements,
           confettiEnabled: state.confettiEnabled ?? s.confettiEnabled,
+          streamSafePreview: state.streamSafePreview ?? s.streamSafePreview,
           visibility: { ...s.visibility, ...state.visibility },
           positions: { ...s.positions, ...state.positions },
           elements: { ...s.elements, ...state.elements },
@@ -533,6 +726,8 @@ export const useEditorStore = create<EditorStore>()(
           widgetSettings: { ...s.widgetSettings },
           confettiEnabled: s.confettiEnabled,
           galleryPlayers: s.galleryPlayers,
+          freeElements: s.freeElements,
+          streamSafePreview: s.streamSafePreview,
           game,
           ts: Date.now(),
         };
@@ -558,6 +753,7 @@ export const useEditorStore = create<EditorStore>()(
         playerSlots: s.playerSlots,
         widgetSettings: s.widgetSettings,
         confettiEnabled: s.confettiEnabled,
+        freeElements: s.freeElements,
       }),
     }
   )

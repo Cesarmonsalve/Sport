@@ -54,6 +54,7 @@ export const MovableLayer = memo(function MovableLayer({
   const assignGalleryPlayerToSlot = useEditorStore((s) => s.assignGalleryPlayerToSlot);
   const setDropHighlightId = useEditorStore((s) => s.setDropHighlightId);
   const dropHighlightId = useEditorStore((s) => s.dropHighlightId);
+  const streamSafePreview = useEditorStore((s) => s.streamSafePreview);
 
   const onDragOver = useCallback(
     (e: React.DragEvent) => {
@@ -173,7 +174,7 @@ export const MovableLayer = memo(function MovableLayer({
     className: cn(
       "ss-movable",
       !visible && "ss-hidden-widget",
-      isSelected && "ss-selected ss-bounding-box",
+      isSelected && !streamSafePreview && "ss-selected ss-bounding-box",
       lockedIds[id] && "ss-locked",
       dropHighlightId === id && "ss-drop-target",
       className
@@ -201,7 +202,7 @@ export const MovableLayer = memo(function MovableLayer({
     ) : null;
 
   const handles =
-    isSelected && interactive && !lockedIds[id] ? (
+    isSelected && interactive && !lockedIds[id] && !streamSafePreview ? (
       <LayerTransformHandles id={id} width={w} height={h} />
     ) : null;
 
