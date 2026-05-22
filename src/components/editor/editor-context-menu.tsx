@@ -70,8 +70,20 @@ export function EditorContextMenu() {
       {item("Reset transform", () => store.resetTransform(menu.id))}
       {entry?.parent && item("Seleccionar padre", () => store.setSelectedId(entry.parent!))}
       {item("Duplicar como copia", () => store.duplicateElementAsCopy(menu.id))}
-      {item("Desvincular del grupo", () => store.setMoveAsBlock(false))}
-      {item("Ocultar", () => store.setVisibility(menu.id, false))}
+      {item("Copiar estilo", () => {
+        store.setSelectedId(menu.id);
+        store.copyStyleFromSelection();
+      })}
+      {item("Pegar estilo", () => {
+        store.setSelectedId(menu.id);
+        store.pasteStyleToSelection();
+      })}
+      {store.freeElements.some((f) => f.id === menu.id)
+        ? item("Eliminar elemento", () => {
+            store.removeFreeElement(menu.id);
+            store.setSelectedIds([]);
+          })
+        : item("Ocultar", () => store.setVisibility(menu.id, false))}
     </div>
   );
 }

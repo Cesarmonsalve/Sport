@@ -31,6 +31,10 @@ export function useEditorShortcuts() {
   const applyBroadcastScene = useEditorStore((s) => s.applyBroadcastScene);
   const copyStyleFromSelection = useEditorStore((s) => s.copyStyleFromSelection);
   const pasteStyleToSelection = useEditorStore((s) => s.pasteStyleToSelection);
+  const canvasZoom = useEditorStore((s) => s.canvasZoom);
+  const setCanvasZoom = useEditorStore((s) => s.setCanvasZoom);
+  const removeFreeElement = useEditorStore((s) => s.removeFreeElement);
+  const freeElements = useEditorStore((s) => s.freeElements);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -136,8 +140,38 @@ export function useEditorShortcuts() {
         }
         if (selectedId) {
           e.preventDefault();
-          setVisibility(selectedId, false);
+          const isFree = freeElements.some((f) => f.id === selectedId);
+          if (isFree) {
+            removeFreeElement(selectedId);
+            setSelectedIds([]);
+          } else {
+            setVisibility(selectedId, false);
+          }
         }
+        return;
+      }
+
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        if (!mod) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent("editor:toggle-shortcuts"));
+          return;
+        }
+      }
+
+      if (mod && (e.key === "+" || e.key === "=")) {
+        e.preventDefault();
+        setCanvasZoom(Math.min(2, Number((canvasZoom + 0.1).toFixed(2))));
+        return;
+      }
+      if (mod && e.key === "-") {
+        e.preventDefault();
+        setCanvasZoom(Math.max(0.25, Number((canvasZoom - 0.1).toFixed(2))));
+        return;
+      }
+      if (mod && e.key === "0") {
+        e.preventDefault();
+        setCanvasZoom(1);
         return;
       }
 
@@ -201,5 +235,9 @@ export function useEditorShortcuts() {
     setPreviewMode,
     setCanvasFitMode,
     applyBroadcastScene,
+    canvasZoom,
+    setCanvasZoom,
+    removeFreeElement,
+    freeElements,
   ]);
 }

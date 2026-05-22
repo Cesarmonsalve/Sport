@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { EditorSidebar } from "@/components/editor/editor-sidebar";
 import { EditorInspector } from "@/components/editor/editor-inspector";
 import { EditorCanvasPreview } from "@/components/editor/editor-canvas-preview";
@@ -12,6 +12,7 @@ import { EditorTemplateSelector } from "@/components/editor/editor-template-sele
 import { EditorContextMenu } from "@/components/editor/editor-context-menu";
 import { RotationToast } from "@/components/editor/rotation-toast";
 import { SelectionFloatingToolbar } from "@/components/editor/selection-floating-toolbar";
+import { EditorShortcutsOverlay } from "@/components/editor/editor-shortcuts-overlay";
 import { EditorSyncProvider } from "@/components/editor/editor-sync-context";
 import { useStreamSync } from "@/hooks/use-stream-sync";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
@@ -54,6 +55,14 @@ export function EditorShell({ sport }: EditorShellProps) {
 
   useEditorShortcuts();
 
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  useEffect(() => {
+    const onToggle = () => setShowShortcuts((s) => !s);
+    window.addEventListener("editor:toggle-shortcuts", onToggle);
+    return () => window.removeEventListener("editor:toggle-shortcuts", onToggle);
+  }, []);
+
   return (
     <EditorSyncProvider publishNow={publishNow}>
     <div className="flex h-screen max-w-[100vw] flex-col overflow-hidden bg-zinc-950">
@@ -69,6 +78,7 @@ export function EditorShell({ sport }: EditorShellProps) {
       <EditorContextMenu />
       <RotationToast />
       <SelectionFloatingToolbar />
+      <EditorShortcutsOverlay open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
     </EditorSyncProvider>
   );

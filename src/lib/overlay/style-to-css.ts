@@ -12,6 +12,7 @@ export function elementStyleToCss(
   if (style.fontSize) vars["--ss-font-size"] = style.fontSize;
   if (style.fontFamily) vars["--ss-font-family"] = style.fontFamily;
 
+  const borderStyle = style.borderStyle ?? "solid";
   return {
     ...vars,
     position: undefined,
@@ -24,9 +25,12 @@ export function elementStyleToCss(
     fontSize: style.fontSize,
     fontFamily: style.fontFamily,
     fontWeight: style.fontWeight as React.CSSProperties["fontWeight"],
+    fontStyle: style.fontStyle as React.CSSProperties["fontStyle"],
     letterSpacing: style.letterSpacing,
     lineHeight: style.lineHeight,
     textAlign: style.textAlign as React.CSSProperties["textAlign"],
+    textTransform: style.textTransform as React.CSSProperties["textTransform"],
+    textDecoration: style.textDecoration,
     color: style.color,
     opacity: style.opacity != null ? Number(style.opacity) : undefined,
     backgroundColor: style.backgroundColor,
@@ -34,15 +38,17 @@ export function elementStyleToCss(
     boxShadow: style.boxShadow,
     borderRadius: style.borderRadius,
     border: style.borderWidth
-      ? `${style.borderWidth} solid ${style.borderColor ?? "transparent"}`
+      ? `${style.borderWidth} ${borderStyle} ${style.borderColor ?? "transparent"}`
       : style.borderColor
-        ? `1px solid ${style.borderColor}`
+        ? `1px ${borderStyle} ${style.borderColor}`
         : undefined,
     padding: style.padding,
     margin: style.margin,
     gap: style.gap,
+    filter: style.filter,
     zIndex: style.zIndex ? Number(style.zIndex) : undefined,
     transform: style.rotate ? `rotate(${style.rotate})` : undefined,
     objectFit: style.objectFit as React.CSSProperties["objectFit"],
+    objectPosition: style.objectPosition,
   };
 }

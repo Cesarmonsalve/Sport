@@ -261,7 +261,10 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
           />
         )}
       </div>
-      <CanvasToolbar onFit={onFit} />
+      <CanvasToolbar
+        onFit={onFit}
+        onOpenShortcuts={() => window.dispatchEvent(new CustomEvent("editor:toggle-shortcuts"))}
+      />
     </div>
   );
 }
