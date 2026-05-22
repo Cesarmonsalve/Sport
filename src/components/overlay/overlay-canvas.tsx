@@ -104,25 +104,18 @@ export const OverlayCanvas = memo(function OverlayCanvas({
         !brandKit.backgroundVideo &&
         brandKit.backgroundImage && (
           <div
-            className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+            className="pointer-events-none absolute inset-0 z-0 h-full w-full bg-cover bg-center bg-no-repeat"
             style={{
-              background: brandKit.backgroundImage.startsWith("linear") ||
+              backgroundImage:
+                brandKit.backgroundImage.startsWith("linear") ||
                 brandKit.backgroundImage.startsWith("radial")
-                ? brandKit.backgroundImage
-                : undefined,
+                  ? brandKit.backgroundImage
+                  : `url(${JSON.stringify(brandKit.backgroundImage)})`,
               opacity: (brandKit.backgroundOpacity ?? 100) / 100,
               filter: `blur(${brandKit.backgroundBlur ?? canvasBackground?.blur ?? 0}px)`,
             }}
-          >
-            {!brandKit.backgroundImage.startsWith("linear") &&
-              !brandKit.backgroundImage.startsWith("radial") && (
-                <img
-                  className="h-full w-full object-cover"
-                  src={brandKit.backgroundImage}
-                  alt=""
-                />
-              )}
-          </div>
+            aria-hidden
+          />
         )}
       {(interactive || showBg) && (canvasBackground?.darken ?? 0) > 0 && (
         <div

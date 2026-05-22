@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Radio, Layers } from "lucide-react";
+import { ArrowRight, Radio, Layers, Smartphone, Tv2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppNav, PageMain, PageShell, SurfaceCard } from "@/components/ui/design-system";
 
@@ -99,6 +99,35 @@ export default function LandingPage() {
               <p className="mt-1 text-xs text-zinc-500">{desc}</p>
             </SurfaceCard>
           ))}
+        </section>
+
+        <section className="mt-12 grid gap-4 sm:grid-cols-2">
+          <Link href="/remote" className="block group">
+            <SurfaceCard hover className="p-5 flex items-start gap-4">
+              <Smartphone className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-zinc-200 group-hover:text-white">
+                  Control remoto móvil
+                </h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Marcador, escenas y widgets desde el celular durante la transmisión.
+                </p>
+              </div>
+            </SurfaceCard>
+          </Link>
+          <Link href="/settings" className="block group">
+            <SurfaceCard hover className="p-5 flex items-start gap-4">
+              <Tv2 className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-zinc-200 group-hover:text-white">
+                  URLs OBS y room
+                </h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Configura el room compartido y copia las Browser Sources para OBS.
+                </p>
+              </div>
+            </SurfaceCard>
+          </Link>
         </section>
       </PageMain>
 

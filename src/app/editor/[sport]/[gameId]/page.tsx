@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useEditorStore } from "@/lib/store/editor-store";
-import type { Sport } from "@/types";
 
 /** Deep-link: /editor/nba/401234567 → redirige al editor con eventId precargado */
 export default function EditorGamePage() {

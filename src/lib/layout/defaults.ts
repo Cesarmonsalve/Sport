@@ -19,8 +19,10 @@ export function factoryElements(sport: Sport): Record<string, ElementStyle> {
   const out: Record<string, ElementStyle> = {};
   Object.values(reg).forEach((e) => {
     if (!e.defaults) return;
-    const { left: _l, top: _t, ...style } = e.defaults;
-    if (Object.keys(style).length) out[e.id] = { ...style };
+    const style: ElementStyle = { ...e.defaults };
+    delete style.left;
+    delete style.top;
+    if (Object.keys(style).length) out[e.id] = style;
   });
   return out;
 }
