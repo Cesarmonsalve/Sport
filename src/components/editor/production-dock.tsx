@@ -29,7 +29,7 @@ import {
 import { buildThemeExport, downloadThemeJson, parseThemeFile } from "@/lib/theme/io";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
 import { MLB_REGISTRY } from "@/lib/registry/mlb";
-import type { Sport } from "@/types";
+import type { SceneTransition, Sport } from "@/types";
 
 const HOTKEYS = [
   ["P", "Mostrar/ocultar sidebar"],
@@ -63,6 +63,10 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
   const designMode = useEditorStore((s) => s.designMode);
   const syncStatus = useEditorStore((s) => s.syncStatus);
   const applyBroadcastScene = useEditorStore((s) => s.applyBroadcastScene);
+  const sceneTransition = useEditorStore((s) => s.sceneTransition);
+  const setSceneTransition = useEditorStore((s) => s.setSceneTransition);
+  const sceneTransitionMs = useEditorStore((s) => s.sceneTransitionMs);
+  const setSceneTransitionMs = useEditorStore((s) => s.setSceneTransitionMs);
   const exportState = useEditorStore((s) => s.exportState);
   const importState = useEditorStore((s) => s.importState);
   const importTheme = useEditorStore((s) => s.importTheme);
@@ -206,7 +210,34 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
               </div>
             </TabsContent>
 
-            <TabsContent value="scenes" className="mt-2 flex flex-wrap gap-2">
+            <TabsContent value="scenes" className="mt-2 space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                <span className="text-muted-foreground">Transición</span>
+                <select
+                  className="h-7 rounded border border-border bg-muted/50 px-2"
+                  value={sceneTransition}
+                  onChange={(e) =>
+                    setSceneTransition(e.target.value as SceneTransition)
+                  }
+                >
+                  {["cut", "fade", "slide-left", "slide-up", "wipe", "dissolve"].map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="range"
+                  min={200}
+                  max={1500}
+                  step={100}
+                  value={sceneTransitionMs}
+                  onChange={(e) => setSceneTransitionMs(Number(e.target.value))}
+                  className="w-24"
+                />
+                <span className="text-muted-foreground">{sceneTransitionMs}ms</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
               {scenes.map((sc) => (
                 <Button
                   key={sc.id}
@@ -219,6 +250,7 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
                   {sc.label}
                 </Button>
               ))}
+              </div>
             </TabsContent>
 
             <TabsContent value="obs" className="mt-2 max-h-32 overflow-y-auto space-y-1">

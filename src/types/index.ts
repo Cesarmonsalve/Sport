@@ -2,7 +2,62 @@ export type Sport = "nba" | "mlb";
 
 export type EditorMode = "simple" | "advanced";
 
-export type WidgetAnimation = "none" | "fade" | "slide";
+export type ScorebugStyle =
+  | "broadcast"
+  | "glass"
+  | "industrial"
+  | "retro"
+  | "minimal"
+  | "esports";
+
+export type SceneTransition =
+  | "cut"
+  | "fade"
+  | "slide-left"
+  | "slide-up"
+  | "wipe"
+  | "dissolve";
+
+export type WidgetAnimation =
+  | "none"
+  | "fade"
+  | "slide"
+  | "scale"
+  | "flip"
+  | "bounce";
+
+export interface BrandKit {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  fontDisplay: string;
+  fontBody: string;
+  logoUrl?: string;
+  watermarkUrl?: string;
+  sponsorSlots: SponsorSlot[];
+}
+
+export interface SponsorSlot {
+  id: string;
+  name: string;
+  logoUrl: string;
+  tagline?: string;
+  duration: number;
+  link?: string;
+}
+
+export interface TickerSlide {
+  type:
+    | "game_score"
+    | "standings"
+    | "news"
+    | "stat_leader"
+    | "sponsor"
+    | "custom";
+  duration: number;
+  enabled: boolean;
+  data?: Record<string, unknown>;
+}
 
 export type DataSource = "espn" | "manual";
 
@@ -130,6 +185,11 @@ export interface StreamSportsState {
   editorMode: EditorMode;
   templateId?: string;
   templateName?: string;
+  scorebugStyle?: ScorebugStyle;
+  sceneTransition?: SceneTransition;
+  sceneTransitionMs?: number;
+  brandKit?: BrandKit;
+  tickerSlides?: TickerSlide[];
   visibility: Record<string, boolean>;
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;

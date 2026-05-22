@@ -21,9 +21,12 @@ import { MlbTicker } from "@/components/overlay/mlb/mlb-ticker";
 import { MlbFieldPositions } from "@/components/overlay/mlb/mlb-field-positions";
 import { MlbWebcamFrames } from "@/components/overlay/mlb/mlb-webcam-frames";
 import { SponsorTicker } from "@/components/overlay/sponsor-ticker";
+import { BroadcastTicker } from "@/components/overlay/shared/broadcast-ticker";
+import { LowerThird } from "@/components/overlay/shared/lower-third";
 import { useEditorStore } from "@/lib/store/editor-store";
 import type { Sport } from "@/types";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface OverlayCanvasProps {
   sport: Sport;
@@ -44,6 +47,20 @@ export const OverlayCanvas = memo(function OverlayCanvas({
   const widget = widgetProp ?? searchParams.get("widget");
   const designMode = useEditorStore((s) => s.designMode);
   const templateId = useEditorStore((s) => s.templateId);
+  const sceneTransition = useEditorStore((s) => s.sceneTransition);
+  const sceneTransitionMs = useEditorStore((s) => s.sceneTransitionMs);
+  const templateKey = `${templateId}-${sceneTransition}`;
+
+  const transitionProps =
+    sceneTransition === "cut"
+      ? {}
+      : sceneTransition === "fade" || sceneTransition === "dissolve"
+        ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+        : sceneTransition === "slide-left"
+          ? { initial: { x: -80, opacity: 0 }, animate: { x: 0, opacity: 1 }, exit: { x: 80, opacity: 0 } }
+          : sceneTransition === "slide-up"
+            ? { initial: { y: 60, opacity: 0 }, animate: { y: 0, opacity: 1 }, exit: { y: -60, opacity: 0 } }
+            : { initial: { scale: 0.96, opacity: 0 }, animate: { scale: 1, opacity: 1 }, exit: { scale: 1.02, opacity: 0 } };
 
   return (
     <div
@@ -72,6 +89,13 @@ export const OverlayCanvas = memo(function OverlayCanvas({
       )}
       <ScoreConfetti />
       <FreeCanvasLayer interactive={interactive} />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={templateKey}
+          className="absolute inset-0"
+          transition={{ duration: sceneTransitionMs / 1000 }}
+          {...transitionProps}
+        >
       {sport === "nba" && (
         <>
           <TeamLogoLayer id="team-logo-home" side="home" interactive={interactive} widgetFilter={widget} />
@@ -84,6 +108,8 @@ export const OverlayCanvas = memo(function OverlayCanvas({
           <NbaWebcamPanel widgetFilter={widget} interactive={interactive} />
           <NbaSocialFooter widgetFilter={widget} interactive={interactive} />
           <SponsorTicker widgetFilter={widget} interactive={interactive} />
+          <BroadcastTicker sport="nba" widgetFilter={widget} interactive={interactive} />
+          <LowerThird sport="nba" widgetFilter={widget} interactive={interactive} />
         </>
       )}
       {sport === "mlb" && (
@@ -99,8 +125,12 @@ export const OverlayCanvas = memo(function OverlayCanvas({
           <MlbTicker widgetFilter={widget} interactive={interactive} />
           <MlbWebcamFrames widgetFilter={widget} interactive={interactive} />
           <SponsorTicker widgetFilter={widget} interactive={interactive} />
+          <BroadcastTicker sport="mlb" widgetFilter={widget} interactive={interactive} />
+          <LowerThird sport="mlb" widgetFilter={widget} interactive={interactive} />
         </>
       )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 });

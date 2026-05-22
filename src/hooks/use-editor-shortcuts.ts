@@ -2,12 +2,16 @@
 
 import { useEffect } from "react";
 import { useEditorStore } from "@/lib/store/editor-store";
+import { getScenesForSport } from "@/lib/scenes/broadcast-scenes";
 
 export function useEditorShortcuts() {
   const selectedId = useEditorStore((s) => s.selectedId);
   const selectedIds = useEditorStore((s) => s.selectedIds);
+  const sport = useEditorStore((s) => s.sport);
+  const visibility = useEditorStore((s) => s.visibility);
   const nudgePosition = useEditorStore((s) => s.nudgePosition);
   const setVisibility = useEditorStore((s) => s.setVisibility);
+  const setSelectedIds = useEditorStore((s) => s.setSelectedIds);
   const toggleSidebar = useEditorStore((s) => s.toggleSidebar);
   const snapToGrid = useEditorStore((s) => s.snapToGrid);
   const setSnapToGrid = useEditorStore((s) => s.setSnapToGrid);
@@ -17,6 +21,13 @@ export function useEditorShortcuts() {
   const showAllWidgets = useEditorStore((s) => s.showAllWidgets);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
+  const bringForward = useEditorStore((s) => s.bringForward);
+  const sendBackward = useEditorStore((s) => s.sendBackward);
+  const setLocked = useEditorStore((s) => s.setLocked);
+  const lockedIds = useEditorStore((s) => s.lockedIds);
+  const setStreamSafePreview = useEditorStore((s) => s.setStreamSafePreview);
+  const setPreviewMode = useEditorStore((s) => s.setPreviewMode);
+  const applyBroadcastScene = useEditorStore((s) => s.applyBroadcastScene);
   const copyStyleFromSelection = useEditorStore((s) => s.copyStyleFromSelection);
   const pasteStyleToSelection = useEditorStore((s) => s.pasteStyleToSelection);
 
@@ -67,6 +78,54 @@ export function useEditorShortcuts() {
         groupSelection();
         return;
       }
+      if (mod && e.key === "a") {
+        e.preventDefault();
+        const ids = Object.keys(visibility).filter((id) => visibility[id] !== false);
+        setSelectedIds(ids);
+        return;
+      }
+      if (mod && e.key === "[") {
+        e.preventDefault();
+        if (selectedId) sendBackward(selectedId);
+        return;
+      }
+      if (mod && e.key === "]") {
+        e.preventDefault();
+        if (selectedId) bringForward(selectedId);
+        return;
+      }
+
+      if (e.key === " " && !mod) {
+        e.preventDefault();
+        setPreviewMode(!useEditorStore.getState().previewMode);
+        setStreamSafePreview(!useEditorStore.getState().streamSafePreview);
+        return;
+      }
+      if (e.key === "f" || e.key === "F") {
+        if (!mod) {
+          setStreamSafePreview(true);
+          return;
+        }
+      }
+      if (e.key === "h" || e.key === "H") {
+        if (!mod && selectedId) {
+          setVisibility(selectedId, visibility[selectedId] === false);
+          return;
+        }
+      }
+      if (e.key === "l" || e.key === "L") {
+        if (!mod && selectedId) {
+          setLocked(selectedId, !lockedIds[selectedId]);
+          return;
+        }
+      }
+      const sceneNum = parseInt(e.key, 10);
+      if (sceneNum >= 1 && sceneNum <= 9 && !mod) {
+        const scenes = getScenesForSport(sport);
+        const sc = scenes[sceneNum - 1];
+        if (sc) applyBroadcastScene(sc.id);
+        return;
+      }
 
       if (e.key === "Delete" || e.key === "Backspace") {
         if (e.shiftKey) {
@@ -89,9 +148,9 @@ export function useEditorShortcuts() {
       if (!targets.length) return;
 
       let step = 1;
-      if (e.shiftKey) step = 8;
-      if (mod) step = 1;
-      const delta = step * (snapToGrid && !mod ? 8 : 1);
+      if (e.shiftKey && !mod) step = 10;
+      else if (e.shiftKey) step = 8;
+      const delta = step * (snapToGrid && !mod && !e.shiftKey ? 8 : 1);
 
       const nudgeAll = (dx: number, dy: number) => {
         targets.forEach((id) => nudgePosition(id, dx, dy));
@@ -129,5 +188,15 @@ export function useEditorShortcuts() {
     redo,
     copyStyleFromSelection,
     pasteStyleToSelection,
+    sport,
+    visibility,
+    setSelectedIds,
+    bringForward,
+    sendBackward,
+    setLocked,
+    lockedIds,
+    setStreamSafePreview,
+    setPreviewMode,
+    applyBroadcastScene,
   ]);
 }

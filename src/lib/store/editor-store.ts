@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
+  BrandKit,
   EditorMode,
   ElementDataBinding,
   ElementStyle,
@@ -10,11 +11,15 @@ import type {
   MlbGameSnapshot,
   NbaGameSnapshot,
   PlayerSlotBinding,
+  SceneTransition,
+  ScorebugStyle,
   Sport,
   StreamSportsState,
+  TickerSlide,
   WidgetDisplaySettings,
   FreeCanvasElement,
 } from "@/types";
+import { DEFAULT_BRAND_KIT, DEFAULT_TICKER_SLIDES } from "@/lib/brand-kit/defaults";
 import { captureHistorySnap, MAX_HISTORY, type EditorHistorySnap } from "@/lib/store/history";
 import { galleryFromMlbGame, galleryFromNbaGame } from "@/lib/espn/gallery";
 import { preloadTeamLogos } from "@/lib/espn/logos";
@@ -115,6 +120,12 @@ interface EditorStore {
   copiedStyle: ElementStyle | null;
   widgetSearch: string;
   showEditorHints: boolean;
+  scorebugStyle: ScorebugStyle;
+  sceneTransition: SceneTransition;
+  sceneTransitionMs: number;
+  brandKit: BrandKit;
+  tickerSlides: TickerSlide[];
+  previewMode: boolean;
   _history: EditorHistorySnap[];
   _historyIndex: number;
 
@@ -176,9 +187,23 @@ interface EditorStore {
   setSnapToElements: (v: boolean) => void;
   copyStyleFromSelection: () => void;
   pasteStyleToSelection: () => void;
-  alignSelection: (mode: "left" | "center" | "right" | "top" | "middle") => void;
+  alignSelection: (
+    mode: "left" | "center" | "right" | "top" | "middle" | "bottom"
+  ) => void;
+  distributeSelection: (axis: "horizontal" | "vertical") => void;
+  matchSizeSelection: (dim: "width" | "height" | "both") => void;
   setWidgetSearch: (q: string) => void;
   dismissEditorHints: () => void;
+  setScorebugStyle: (s: ScorebugStyle) => void;
+  setSceneTransition: (t: SceneTransition) => void;
+  setSceneTransitionMs: (ms: number) => void;
+  setBrandKit: (kit: Partial<BrandKit>) => void;
+  setTickerSlides: (slides: TickerSlide[]) => void;
+  setPreviewMode: (v: boolean) => void;
+  lockElement: (id: string) => void;
+  unlockElement: (id: string) => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
   exportState: () => StreamSportsState;
 }
 
@@ -250,6 +275,12 @@ export const useEditorStore = create<EditorStore>()(
       copiedStyle: null,
       widgetSearch: "",
       showEditorHints: true,
+      scorebugStyle: "broadcast",
+      sceneTransition: "fade",
+      sceneTransitionMs: 500,
+      brandKit: { ...DEFAULT_BRAND_KIT },
+      tickerSlides: [...DEFAULT_TICKER_SLIDES],
+      previewMode: false,
       _history: [captureHistorySnap({
         positions: defaultPositions("nba"),
         elements: {},
@@ -283,6 +314,25 @@ export const useEditorStore = create<EditorStore>()(
         applyHistorySnap(set, s._history[idx]!);
         set({ _historyIndex: idx });
       },
+      canUndo: () => get()._historyIndex > 0,
+      canRedo: () => get()._historyIndex < get()._history.length - 1,
+      setScorebugStyle: (scorebugStyle) => {
+        get().pushHistory();
+        set({ scorebugStyle });
+      },
+      setSceneTransition: (sceneTransition) => set({ sceneTransition }),
+      setSceneTransitionMs: (sceneTransitionMs) => set({ sceneTransitionMs }),
+      setBrandKit: (kit) => {
+        const next = { ...get().brandKit, ...kit };
+        set({ brandKit: next });
+        if (typeof window !== "undefined") {
+          localStorage.setItem("stream-sports-brand-kit", JSON.stringify(next));
+        }
+      },
+      setTickerSlides: (tickerSlides) => set({ tickerSlides }),
+      setPreviewMode: (previewMode) => set({ previewMode }),
+      lockElement: (id) => get().setLocked(id, true),
+      unlockElement: (id) => get().setLocked(id, false),
       placeFreeDrop: (player, x, y) => {
         get().pushHistory();
         const id = `dropped-photo-${Date.now().toString(36).slice(-5)}`;
@@ -390,7 +440,80 @@ export const useEditorStore = create<EditorStore>()(
           if (mode === "center") left = midX - r.w / 2;
           if (mode === "top") top = minT;
           if (mode === "middle") top = midY - r.h / 2;
+          if (mode === "bottom") top = maxB - r.h;
           get().setPosition(r.id, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
+        }
+      },
+      distributeSelection: (axis) => {
+        const ids = (
+          get().selectedIds.length
+            ? get().selectedIds
+            : get().selectedId
+              ? [get().selectedId]
+              : []
+        ).filter((id): id is string => Boolean(id));
+        if (ids.length < 3) return;
+        get().pushHistory();
+        const rects = ids.map((id) => {
+          const p = get().positions[id];
+          const st = get().elements[id];
+          return {
+            id,
+            left: parseFloat(p?.left ?? "0") || 0,
+            top: parseFloat(p?.top ?? "0") || 0,
+            w: parseFloat(st?.width ?? "100") || 100,
+            h: parseFloat(st?.height ?? "64") || 64,
+          };
+        });
+        const sorted = [...rects].sort((a, b) =>
+          axis === "horizontal" ? a.left - b.left : a.top - b.top
+        );
+        const first = sorted[0]!;
+        const last = sorted[sorted.length - 1]!;
+        const span =
+          axis === "horizontal"
+            ? last.left + last.w - first.left
+            : last.top + last.h - first.top;
+        const totalSize = sorted.reduce(
+          (s, r) => s + (axis === "horizontal" ? r.w : r.h),
+          0
+        );
+        const gap = (span - totalSize) / (sorted.length - 1);
+        let cursor = axis === "horizontal" ? first.left : first.top;
+        for (const r of sorted) {
+          if (axis === "horizontal") {
+            get().setPosition(r.id, {
+              left: `${Math.round(cursor)}px`,
+              top: `${Math.round(r.top)}px`,
+            });
+            cursor += r.w + gap;
+          } else {
+            get().setPosition(r.id, {
+              left: `${Math.round(r.left)}px`,
+              top: `${Math.round(cursor)}px`,
+            });
+            cursor += r.h + gap;
+          }
+        }
+      },
+      matchSizeSelection: (dim) => {
+        const ids = (
+          get().selectedIds.length
+            ? get().selectedIds
+            : get().selectedId
+              ? [get().selectedId]
+              : []
+        ).filter((id): id is string => Boolean(id));
+        if (ids.length < 2) return;
+        get().pushHistory();
+        const first = get().elements[ids[0]!] ?? {};
+        const w = first.width ?? "100px";
+        const h = first.height ?? "64px";
+        for (const id of ids.slice(1)) {
+          const patch: ElementStyle = {};
+          if (dim === "width" || dim === "both") patch.width = w;
+          if (dim === "height" || dim === "both") patch.height = h;
+          get().setElementStyle(id, patch);
         }
       },
       setWidgetSearch: (widgetSearch) => set({ widgetSearch }),
@@ -683,6 +806,11 @@ export const useEditorStore = create<EditorStore>()(
           freeElements: state.freeElements ?? s.freeElements,
           confettiEnabled: state.confettiEnabled ?? s.confettiEnabled,
           streamSafePreview: state.streamSafePreview ?? s.streamSafePreview,
+          scorebugStyle: state.scorebugStyle ?? s.scorebugStyle,
+          sceneTransition: state.sceneTransition ?? s.sceneTransition,
+          sceneTransitionMs: state.sceneTransitionMs ?? s.sceneTransitionMs,
+          brandKit: state.brandKit ? { ...s.brandKit, ...state.brandKit } : s.brandKit,
+          tickerSlides: state.tickerSlides ?? s.tickerSlides,
           visibility: { ...s.visibility, ...state.visibility },
           positions: { ...s.positions, ...state.positions },
           elements: { ...s.elements, ...state.elements },
@@ -744,6 +872,11 @@ export const useEditorStore = create<EditorStore>()(
           galleryPlayers: s.galleryPlayers,
           freeElements: s.freeElements,
           streamSafePreview: s.streamSafePreview,
+          scorebugStyle: s.scorebugStyle,
+          sceneTransition: s.sceneTransition,
+          sceneTransitionMs: s.sceneTransitionMs,
+          brandKit: s.brandKit,
+          tickerSlides: s.tickerSlides,
           game,
           ts: Date.now(),
         };
@@ -770,6 +903,11 @@ export const useEditorStore = create<EditorStore>()(
         widgetSettings: s.widgetSettings,
         confettiEnabled: s.confettiEnabled,
         freeElements: s.freeElements,
+        scorebugStyle: s.scorebugStyle,
+        sceneTransition: s.sceneTransition,
+        sceneTransitionMs: s.sceneTransitionMs,
+        brandKit: s.brandKit,
+        tickerSlides: s.tickerSlides,
       }),
     }
   )

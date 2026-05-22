@@ -6,6 +6,7 @@ import { MovableLayer } from "@/components/overlay/movable-layer";
 import { AnimatedScore } from "@/components/overlay/animated-score";
 import { widgetOnly } from "@/lib/overlay/widget-filter";
 import { useEditorStore, selectNbaGame } from "@/lib/store/editor-store";
+import { scorebugClassName } from "@/lib/scorebug/styles";
 import { cn } from "@/lib/utils";
 
 const SCOREBUG_IDS = [
@@ -32,6 +33,7 @@ export const NbaScorebug = memo(function NbaScorebug({
   const game = useEditorStore(selectNbaGame);
   const elements = useEditorStore((s) => s.elements);
   const visibility = useEditorStore((s) => s.visibility);
+  const scorebugStyle = useEditorStore((s) => s.scorebugStyle);
 
   if (!widgetOnly(widgetFilter, SCOREBUG_IDS)) return null;
 
@@ -45,7 +47,7 @@ export const NbaScorebug = memo(function NbaScorebug({
   return (
     <MovableLayer
       id="nba-scorebug"
-      className="ss-scorebug-group inline-block"
+      className={scorebugClassName(scorebugStyle, "ss-scorebug-group inline-block")}
       editable
       interactive={interactive}
     >

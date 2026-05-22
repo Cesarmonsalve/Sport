@@ -244,28 +244,34 @@ export default function LandingPage() {
         </section>
 
         <section className="mt-14 rounded-xl border border-border bg-card p-6 overflow-x-auto">
-          <h2 className="font-semibold text-sm mb-4">Stream Sports vs overlays manuales en OBS</h2>
-          <table className="w-full text-xs text-left">
+          <h2 className="font-semibold text-sm mb-4">Stream Sports vs Competencia</h2>
+          <table className="w-full text-xs text-left min-w-[640px]">
             <thead>
               <tr className="text-muted-foreground border-b border-border">
-                <th className="py-2 pr-4">Capacidad</th>
-                <th className="py-2 pr-4">Manual (texto/imagen)</th>
-                <th className="py-2">Stream Sports</th>
+                <th className="py-2 pr-3">Feature</th>
+                <th className="py-2 pr-3">Stream Sports</th>
+                <th className="py-2 pr-3">OBScoreboard</th>
+                <th className="py-2">StreamSlayers</th>
               </tr>
             </thead>
             <tbody className="text-muted-foreground">
               {[
-                ["Marcador ESPN auto", "No", "Sí — proxy NBA/MLB"],
-                ["Rotación quinteto NBA", "Manual", "Auto + toast"],
-                ["URLs OBS por widget", "Una escena", "Rutas + ?room= MQTT"],
-                ["Editor layout 1920×1080", "Photoshop", "Drag + tema/proyecto JSON"],
-                ["Coste mensual", "Gratis", "Self-host gratis"],
-                ["Patrocinadores rotación", "Capas extra", "Widget sponsor-ticker"],
-              ].map(([cap, man, ss]) => (
+                ["ESPN Auto-fetch", "✅", "❌", "❌"],
+                ["Editor visual", "✅", "❌", "❌"],
+                ["Self-hosted", "✅", "❌", "❌"],
+                ["Gratis", "✅", "❌", "❌"],
+                ["6 estilos scorebug", "✅", "❌", "✅"],
+                ["Mobile remote", "✅", "✅", "❌"],
+                ["MQTT real-time", "✅", "❌", "❌"],
+                ["Per-widget URLs", "✅", "❌", "❌"],
+                ["Brand Kit", "✅", "❌", "❌"],
+                ["Layer Panel", "✅", "❌", "❌"],
+              ].map(([cap, ss, ob, sl]) => (
                 <tr key={cap} className="border-b border-border/50">
-                  <td className="py-2 pr-4 text-foreground">{cap}</td>
-                  <td className="py-2 pr-4">{man}</td>
-                  <td className="py-2 text-primary">{ss}</td>
+                  <td className="py-2 pr-3 text-foreground">{cap}</td>
+                  <td className="py-2 pr-3 text-primary">{ss}</td>
+                  <td className="py-2 pr-3">{ob}</td>
+                  <td className="py-2">{sl}</td>
                 </tr>
               ))}
             </tbody>

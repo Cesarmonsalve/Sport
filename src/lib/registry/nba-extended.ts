@@ -52,6 +52,12 @@ export const NBA_EXTENDED: Record<string, RegistryEntry> = {
   "sponsor-ticker": e("sponsor-ticker", "Patrocinadores (rotación)", "Patrocinio", {
     defaults: { left: "640px", top: "980px", width: "640px" },
   }),
+  "broadcast-ticker": e("broadcast-ticker", "Broadcast ticker ESPN", "Ticker", {
+    defaults: { left: "0", top: "1032px", width: "1920px", height: "48px" },
+  }),
+  "nba-lower-third": e("nba-lower-third", "Lower third", "Tarjetas", {
+    defaults: { left: "48px", top: "880px" },
+  }),
   "timeouts-bar": e("timeouts-bar", "Timeouts", "Marcador · situación", {
     parent: "nba-scorebug",
     defaults: { left: "400px", top: "110px", fontSize: "12px" },

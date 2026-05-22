@@ -17,6 +17,8 @@ import {
   InspectorTypographyTab,
 } from "@/components/editor/inspector-fields";
 import { WidgetDisplayControls } from "@/components/editor/widget-display-controls";
+import { ScorebugStylePicker } from "@/components/editor/scorebug-style-picker";
+import { TickerInspector } from "@/components/editor/ticker-inspector";
 import type { Sport, WidgetAnimation } from "@/types";
 
 interface EditorInspectorProps {
@@ -27,6 +29,9 @@ const ANIM_OPTIONS: { value: WidgetAnimation; label: string }[] = [
   { value: "none", label: "Sin animación" },
   { value: "fade", label: "Fade in" },
   { value: "slide", label: "Slide in" },
+  { value: "scale", label: "Scale" },
+  { value: "flip", label: "Flip 3D" },
+  { value: "bounce", label: "Bounce" },
 ];
 
 export function EditorInspector({ sport }: EditorInspectorProps) {
@@ -181,6 +186,12 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
               </TabsContent>
 
               <TabsContent value="vis" className="mt-3 space-y-3">
+                {(selectedId === "nba-scorebug" || selectedId === "scoreboard") && (
+                  <ScorebugStylePicker />
+                )}
+                {(selectedId === "broadcast-ticker" || selectedId === "sponsor-ticker") && (
+                  <TickerInspector />
+                )}
                 <WidgetDisplayControls widgetId={selectedId} />
                 <div className="flex items-center justify-between">
                   <Label className="text-xs">Confetti en gol</Label>

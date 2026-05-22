@@ -15,6 +15,8 @@ import {
   persistRoom,
   randomRoomId,
 } from "@/lib/sync/room";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BrandKitPanel } from "@/components/editor/brand-kit-panel";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -45,6 +47,15 @@ export default function SettingsPage() {
       <main className="mx-auto max-w-lg px-6 pb-16 space-y-8">
         <h1 className="text-2xl font-semibold">Ajustes</h1>
 
+        <Tabs defaultValue="general">
+          <TabsList>
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="brand">Marca</TabsTrigger>
+          </TabsList>
+          <TabsContent value="brand" className="mt-6">
+            <BrandKitPanel />
+          </TabsContent>
+          <TabsContent value="general" className="mt-6 space-y-8">
         <section className="space-y-3">
           <Label htmlFor="room">Room ID (MQTT + overlays)</Label>
           <div className="flex gap-2">
@@ -113,6 +124,8 @@ export default function SettingsPage() {
         >
           Mostrar onboarding otra vez
         </Button>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

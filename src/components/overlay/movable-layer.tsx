@@ -26,6 +26,15 @@ const animVariants: Record<
   none: { initial: {}, animate: {} },
   fade: { initial: { opacity: 0 }, animate: { opacity: 1 } },
   slide: { initial: { opacity: 0, x: -24 }, animate: { opacity: 1, x: 0 } },
+  scale: { initial: { opacity: 0, scale: 0.85 }, animate: { opacity: 1, scale: 1 } },
+  flip: {
+    initial: { opacity: 0, rotateX: 90 },
+    animate: { opacity: 1, rotateX: 0 },
+  },
+  bounce: {
+    initial: { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+  },
 };
 
 export const MovableLayer = memo(function MovableLayer({

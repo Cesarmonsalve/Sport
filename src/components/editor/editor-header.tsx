@@ -10,6 +10,9 @@ import {
   Settings,
   ChevronDown,
   LayoutDashboard,
+  Undo2,
+  Redo2,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,8 +40,13 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
   const setStreamSafePreview = useEditorStore((s) => s.setStreamSafePreview);
   const snapToElements = useEditorStore((s) => s.snapToElements);
   const setSnapToElements = useEditorStore((s) => s.setSnapToElements);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
+  const historyIndex = useEditorStore((s) => s._historyIndex);
+  const historyLen = useEditorStore((s) => s._history.length);
 
   const overlayBase = appendRoomToPath(`/overlay/${sport}`, room);
+  const remoteUrl = appendRoomToPath("/remote", room);
 
   const copyUrl = (path: string) => {
     const url =
@@ -75,6 +83,32 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
       </Link>
 
       <div className="ml-auto flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          disabled={historyIndex <= 0}
+          onClick={() => undo()}
+          title="Deshacer (Ctrl+Z)"
+        >
+          <Undo2 className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          disabled={historyIndex >= historyLen - 1}
+          onClick={() => redo()}
+          title="Rehacer (Ctrl+Y)"
+        >
+          <Redo2 className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" className="text-xs gap-1 hidden sm:flex" asChild>
+          <Link href={remoteUrl} target="_blank">
+            <Smartphone className="h-3.5 w-3.5" />
+            Remote
+          </Link>
+        </Button>
         <div className="flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5">
           <Unlock className="h-3 w-3 text-primary" />
           <Switch id="free-edit" checked={freeEditMode} onCheckedChange={setFreeEditMode} />

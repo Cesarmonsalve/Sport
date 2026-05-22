@@ -5,6 +5,7 @@ import { MovableLayer } from "@/components/overlay/movable-layer";
 import { AnimatedScore } from "@/components/overlay/animated-score";
 import { widgetOnly } from "@/lib/overlay/widget-filter";
 import { useEditorStore, selectMlbGame } from "@/lib/store/editor-store";
+import { scorebugClassName } from "@/lib/scorebug/styles";
 import { cn } from "@/lib/utils";
 
 const SCOREBOARD_IDS = [
@@ -28,6 +29,7 @@ export const MlbScoreboard = memo(function MlbScoreboard({
   const game = useEditorStore(selectMlbGame);
   const elements = useEditorStore((s) => s.elements);
   const freeEditMode = useEditorStore((s) => s.freeEditMode);
+  const scorebugStyle = useEditorStore((s) => s.scorebugStyle);
 
   if (!widgetOnly(widgetFilter, SCOREBOARD_IDS)) return null;
 
@@ -37,7 +39,10 @@ export const MlbScoreboard = memo(function MlbScoreboard({
   return (
     <MovableLayer
       id="scoreboard"
-      className="rounded-lg border border-white/10 bg-black/75 px-4 py-3 backdrop-blur-sm inline-block"
+      className={scorebugClassName(
+        scorebugStyle,
+        "rounded-lg px-4 py-3 inline-block border border-white/10"
+      )}
       editable
       interactive={interactive}
     >

@@ -45,4 +45,10 @@ export const MLB_EXTENDED: Record<string, RegistryEntry> = {
   "sponsor-ticker": e("sponsor-ticker", "Patrocinadores (rotación)", "Patrocinio", {
     defaults: { left: "640px", top: "980px", width: "640px" },
   }),
+  "broadcast-ticker": e("broadcast-ticker", "Broadcast ticker ESPN", "Ticker", {
+    defaults: { left: "0", top: "1032px", width: "1920px", height: "48px" },
+  }),
+  "mlb-lower-third": e("mlb-lower-third", "Lower third", "Tarjetas", {
+    defaults: { left: "48px", top: "880px" },
+  }),
 };

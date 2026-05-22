@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Layers,
@@ -13,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CollapsiblePlayerGallery } from "@/components/editor/player-gallery-panel";
+import { LayerPanel } from "@/components/editor/layer-panel";
 import { Input } from "@/components/ui/input";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
@@ -32,6 +34,7 @@ interface EditorSidebarProps {
 }
 
 export function EditorSidebar({ sport }: EditorSidebarProps) {
+  const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overlays");
   const collapsed = useEditorStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useEditorStore((s) => s.toggleSidebar);
   const registry = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
@@ -83,7 +86,13 @@ export function EditorSidebar({ sport }: EditorSidebarProps) {
             <button
               key={id}
               type="button"
-              className="flex flex-1 flex-col items-center gap-0.5 rounded-md py-1.5 text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => setActiveNav(id)}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-0.5 rounded-md py-1.5 text-[10px] transition-colors",
+                activeNav === id
+                  ? "bg-primary/15 text-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
               title={label}
             >
               <Icon className="h-4 w-4" />
@@ -130,7 +139,8 @@ export function EditorSidebar({ sport }: EditorSidebarProps) {
       )}
 
       <div className="flex-1 overflow-y-auto p-2">
-        {!collapsed &&
+        {!collapsed && activeNav === "overlays" && <LayerPanel sport={sport} />}
+        {!collapsed && activeNav === "widgets" &&
           Object.entries(byCat).map(([cat, items]) => (
             <div key={cat} className="mb-4">
               <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
