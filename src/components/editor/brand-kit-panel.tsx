@@ -63,7 +63,6 @@ export function BrandKitPanel() {
             onChange={(e) => setBrandKit({ logoUrl: e.target.value })}
           />
         </div>
-        </div>
 
         <div className="grid gap-2 pt-4 border-t border-border mt-4">
           <h3 className="text-xs font-semibold">Fondo del Canvas</h3>
