@@ -1,43 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import { MovableLayer } from "@/components/overlay/movable-layer";
+import { LineupRow } from "@/components/overlay/shared/lineup-row";
 import { shouldShowWidget } from "@/lib/overlay/widget-filter";
-import { useEditorStore } from "@/lib/store/editor-store";
-import type { MlbPlayer } from "@/types";
+import { useEditorStore, selectMlbGame } from "@/lib/store/editor-store";
+import type { LineupDisplayMode } from "@/types";
 
 interface Props {
   widgetFilter?: string | null;
   interactive?: boolean;
 }
 
-function RosterCol({ title, players }: { title: string; players: MlbPlayer[] }) {
-  return (
-    <div className="w-[140px]">
-      <p className="mb-1 text-[10px] uppercase tracking-wider text-white/50">{title}</p>
-      <ul className="space-y-0.5">
-        {players.slice(0, 12).map((p) => (
-          <li
-            key={p.id}
-            className="flex items-center gap-2 rounded px-1 py-0.5 text-[11px] hover:bg-white/5"
-          >
-            {p.headshot ? (
-              <Image src={p.headshot} alt="" width={20} height={20} className="rounded-full" unoptimized />
-            ) : (
-              <span className="h-5 w-5 rounded-full bg-white/10" />
-            )}
-            <span className="text-white/40 w-4">#{p.jersey}</span>
-            <span className="truncate flex-1 text-white/90">{p.name}</span>
-            <span className="text-white/40">{p.position}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 export function MlbRoster({ widgetFilter, interactive = false }: Props) {
-  const game = useEditorStore((s) => s.mlbGame);
+  const game = useEditorStore(selectMlbGame);
+  const mode =
+    useEditorStore((s) => s.widgetSettings["roster-widget"]?.lineupDisplayMode) ?? "photo-text";
+
   if (!shouldShowWidget(widgetFilter, "roster-widget")) return null;
 
   const away = game.rosterAway ?? [];
@@ -47,13 +25,47 @@ export function MlbRoster({ widgetFilter, interactive = false }: Props) {
   return (
     <MovableLayer
       id="roster-widget"
-      className="flex gap-4 rounded-lg border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm inline-block"
+      className="flex gap-4 rounded-lg border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm inline-block ss-lineup-panel"
       editable
       interactive={interactive}
     >
-      <RosterCol title={game.awayAbbr} players={away} />
+      <div className="flex flex-col min-w-[140px]">
+        <p className="mb-1 text-[10px] uppercase tracking-wider text-white/50">{game.awayAbbr}</p>
+        {away.slice(0, 12).map((p, i) => (
+          <LineupRow
+            key={p.id}
+            player={p}
+            posLabel={p.position ?? "—"}
+            accent="#ff7a00"
+            mode={mode as LineupDisplayMode}
+            atomPrefix="roster"
+            index={i}
+            team="away"
+            groupParent="roster-widget"
+            interactive={interactive}
+            sport="mlb"
+          />
+        ))}
+      </div>
       <div className="w-px bg-white/10" />
-      <RosterCol title={game.homeAbbr} players={home} />
+      <div className="flex flex-col min-w-[140px]">
+        <p className="mb-1 text-[10px] uppercase tracking-wider text-white/50">{game.homeAbbr}</p>
+        {home.slice(0, 12).map((p, i) => (
+          <LineupRow
+            key={p.id}
+            player={p}
+            posLabel={p.position ?? "—"}
+            accent="#1a5cff"
+            mode={mode as LineupDisplayMode}
+            atomPrefix="roster"
+            index={i}
+            team="home"
+            groupParent="roster-widget"
+            interactive={interactive}
+            sport="mlb"
+          />
+        ))}
+      </div>
     </MovableLayer>
   );
 }

@@ -76,11 +76,18 @@ Evita CORS en el cliente; el front usa `src/lib/espn/client.ts`.
 
 ## Editor
 
-- **Modo simple**: arrastra el scorebug/marcador como grupo
-- **Modo avanzado**: hijos individuales
-- **Shift + arrastrar**: box selection multi-widget
-- **P**: colapsar sidebar · **Del**: ocultar widget · **Flechas**: nudge · **Shift+G**: snap 8px
-- **Exportar / importar tema JSON**: barra inferior del editor
+- **Edición libre** (header): mueve cualquier hijo del scorebug, quinteto, cancha, etc.
+- **Galería Jugadores** (panel lateral): al elegir partido (`?event=ID`), carga todas las fotos ESPN del boxscore
+  - Arrastra un jugador desde la galería y suéltalo en un slot del canvas (`court-home-pg`, `field-cf`, fila quinteto, etc.)
+  - Muestra etiqueta con nombre asignado en el slot
+- **Logos automáticos**: al seleccionar partido, logos ESPN en `team-logo-home` / `team-logo-away` y dentro del scorebug
+  - Inspector → Datos → fuente **ESPN** (vacía URL manual en Imagen)
+- **Modos lineup** (Inspector → pestaña Vis/Datos con widget quinteto/roster seleccionado):
+  - `text-only`, `photo-text`, `photo-stats`, `text-stats`, `full`, `photo-only`
+  - Presets: *Lineup texto mínimo*, *broadcast fotos*, *stats pesado*
+- **Marcadores cancha/campo**: `photo` | `initials` | `name` | `dot`
+- **Confetti** en cambio de marcador (toggle en Inspector → Vis, off por defecto)
+- **Shift + arrastrar**: box selection · **P**: sidebar · **Exportar tema JSON**: barra inferior
 
 ## Sync
 

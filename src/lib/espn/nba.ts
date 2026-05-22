@@ -1,6 +1,7 @@
 import { formatTodayEspn } from "@/lib/utils";
 import { espnFetch } from "@/lib/espn/client";
 import { resolveHeadshot } from "@/lib/espn/headshot";
+import { logosFromCompetitors, resolveTeamLogo } from "@/lib/espn/logos";
 import type {
   EspnBoxscoreAthlete,
   EspnBoxscorePlayerGroup,
@@ -28,7 +29,7 @@ function parseCompetitor(ev: EspnEvent, side: "home" | "away") {
   return {
     abbr: t?.abbreviation ?? (side === "home" ? "LOC" : "VIS"),
     score: String(team?.score ?? "0"),
-    logo: t?.logo,
+    logo: resolveTeamLogo(t),
   };
 }
 
@@ -192,9 +193,12 @@ export function parseNbaSummary(
 
   const foulsHome = statVal(comp, "home", "fouls") ?? statVal(comp, "home", "totalFouls");
   const foulsAway = statVal(comp, "away", "fouls") ?? statVal(comp, "away", "totalFouls");
+  const logos = logosFromCompetitors(comp);
 
   return {
     ...base,
+    homeLogo: logos.home ?? base.homeLogo,
+    awayLogo: logos.away ?? base.awayLogo,
     clock: clock || base.clock,
     period,
     shotClock: shotClock ?? base.shotClock,

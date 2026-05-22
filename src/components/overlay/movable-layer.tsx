@@ -6,7 +6,8 @@ import { LayerTransformHandles } from "@/components/editor/layer-transform-handl
 import { elementStyleToCss } from "@/lib/overlay/style-to-css";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { useLayerDrag } from "@/hooks/use-layer-drag";
-import type { WidgetAnimation } from "@/types";
+import { GALLERY_DRAG_MIME } from "@/components/editor/player-gallery-panel";
+import type { GalleryPlayer, WidgetAnimation } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface MovableLayerProps {
@@ -48,7 +49,46 @@ export const MovableLayer = memo(function MovableLayer({
   const lockedIds = useEditorStore((s) => s.lockedIds);
   const inlineEditId = useEditorStore((s) => s.inlineEditId);
   const setInlineEditId = useEditorStore((s) => s.setInlineEditId);
+  const setSelectedId = useEditorStore((s) => s.setSelectedId);
   const setTextOverride = useEditorStore((s) => s.setTextOverride);
+  const assignGalleryPlayerToSlot = useEditorStore((s) => s.assignGalleryPlayerToSlot);
+  const setDropHighlightId = useEditorStore((s) => s.setDropHighlightId);
+  const dropHighlightId = useEditorStore((s) => s.dropHighlightId);
+
+  const onDragOver = useCallback(
+    (e: React.DragEvent) => {
+      if (!interactive) return;
+      if (e.dataTransfer.types.includes(GALLERY_DRAG_MIME)) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        setDropHighlightId(id);
+      }
+    },
+    [interactive, id, setDropHighlightId]
+  );
+
+  const onDragLeave = useCallback(() => {
+    if (dropHighlightId === id) setDropHighlightId(null);
+  }, [dropHighlightId, id, setDropHighlightId]);
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      if (!interactive) return;
+      const raw = e.dataTransfer.getData(GALLERY_DRAG_MIME);
+      if (!raw) return;
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        const player = JSON.parse(raw) as GalleryPlayer;
+        assignGalleryPlayerToSlot(id, player);
+        setSelectedId(id);
+      } catch {
+        /* ignore */
+      }
+      setDropHighlightId(null);
+    },
+    [interactive, id, assignGalleryPlayerToSlot, setDropHighlightId, setSelectedId]
+  );
 
   const pos = positions[id];
   const style = elements[id] ?? {};
@@ -135,11 +175,16 @@ export const MovableLayer = memo(function MovableLayer({
       !visible && "ss-hidden-widget",
       isSelected && "ss-selected ss-bounding-box",
       lockedIds[id] && "ss-locked",
+      dropHighlightId === id && "ss-drop-target",
       className
     ),
     style: merged,
     onPointerDown,
     onDoubleClick,
+    onDragOver,
+    onDragLeave,
+    onDrop,
+    "data-drop-slot": id,
     tabIndex: canDrag ? 0 : undefined,
   };
 

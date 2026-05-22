@@ -1,12 +1,12 @@
 "use client";
 
 import { memo } from "react";
-import Image from "next/image";
 import { MovableLayer } from "@/components/overlay/movable-layer";
+import { PlayerHeadshot } from "@/components/ui/player-headshot";
 import { useEditorStore, selectNbaGame } from "@/lib/store/editor-store";
 import { getPlayerForSlot } from "@/lib/espn/player-slots";
 import { cn } from "@/lib/utils";
-import type { ElementDataBinding, NbaGameSnapshot, NbaPlayer, PlayerSlotBinding } from "@/types";
+import type { ElementDataBinding, MarkerStyle, NbaGameSnapshot, NbaPlayer, PlayerSlotBinding } from "@/types";
 
 interface Props {
   slotId: string;
@@ -25,13 +25,19 @@ function resolveSlotPlayer(
   const data = dataBindings[slotId];
   if (binding?.dataSource === "manual" || data?.dataSource === "manual") {
     return {
-      id: binding?.athleteId ?? slotId,
+      id: binding?.athleteId ?? data?.athleteId ?? slotId,
       name: binding?.manualName ?? data?.manualText ?? "—",
       headshot: binding?.manualImageUrl ?? data?.manualImageUrl,
       jersey: undefined,
     };
   }
   return getPlayerForSlot(game, slotId, bindings);
+}
+
+function initials(name: string) {
+  const parts = name.split(" ").filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
 export const NbaCourtSlot = memo(function NbaCourtSlot({
@@ -44,15 +50,28 @@ export const NbaCourtSlot = memo(function NbaCourtSlot({
   const bindings = useEditorStore((s) => s.playerSlots);
   const dataBindings = useEditorStore((s) => s.dataBindings);
   const elements = useEditorStore((s) => s.elements);
+  const markerStyle =
+    useEditorStore((s) => s.widgetSettings["court-positions-widget"]?.markerStyle) ?? "photo";
+  const dropHighlightId = useEditorStore((s) => s.dropHighlightId);
   const player = resolveSlotPlayer(slotId, game, bindings, dataBindings);
+  const bindingLabel = dataBindings[slotId]?.displayLabel;
   const accent = team === "home" ? "ss-accent-home" : "ss-accent-away";
   const style = elements[slotId];
+
+  const showPhoto = markerStyle === "photo" && !!player?.headshot;
+  const showInitials = markerStyle === "initials";
+  const showDot = markerStyle === "dot";
+  const showName = markerStyle === "name" || markerStyle === "photo";
 
   return (
     <MovableLayer
       id={slotId}
       groupParent="court-positions-widget"
-      className={cn("ss-court-slot", accent)}
+      className={cn(
+        "ss-court-slot",
+        accent,
+        dropHighlightId === slotId && "ss-drop-target"
+      )}
       editable
       interactive={interactive}
     >
@@ -63,28 +82,37 @@ export const NbaCourtSlot = memo(function NbaCourtSlot({
           borderRadius: style?.borderRadius,
           backgroundColor: style?.backgroundColor,
         }}
+        data-drop-slot={slotId}
       >
         <span className="text-[10px] font-bold tracking-widest opacity-80">{label}</span>
-        {player?.headshot ? (
-          <Image
-            src={player.headshot}
-            alt=""
-            width={40}
-            height={40}
-            className="rounded-full object-cover"
-            style={{ objectFit: (style?.objectFit as React.CSSProperties["objectFit"]) ?? "cover" }}
-            unoptimized
-          />
-        ) : (
-          <div className="h-10 w-10 rounded-full bg-white/10" />
+        {showDot && <div className="h-3 w-3 rounded-full bg-white/80" />}
+        {showInitials && (
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+            style={{ backgroundColor: team === "home" ? "#1a5cff44" : "#ff7a0044" }}
+          >
+            {initials(player?.name ?? label)}
+          </div>
         )}
-        <span
-          className="text-xs font-semibold truncate max-w-[120px]"
-          style={{ color: style?.color, fontFamily: style?.fontFamily, fontSize: style?.fontSize }}
-        >
-          {player?.name?.split(" ").pop() ?? "—"}
-        </span>
-        <span className="text-[9px] text-white/50">#{player?.jersey ?? "—"}</span>
+        {showPhoto && (
+          <PlayerHeadshot src={player?.headshot} alt={player?.name ?? ""} size={40} sport="nba" />
+        )}
+        {showName && (
+          <span
+            className="text-xs font-semibold truncate max-w-[120px]"
+            style={{ color: style?.color, fontFamily: style?.fontFamily, fontSize: style?.fontSize }}
+          >
+            {player?.name?.split(" ").pop() ?? "—"}
+          </span>
+        )}
+        {!showDot && (
+          <span className="text-[9px] text-white/50">#{player?.jersey ?? "—"}</span>
+        )}
+        {bindingLabel && (
+          <span className="text-[8px] text-primary/90 truncate max-w-[110px] text-center">
+            {bindingLabel}
+          </span>
+        )}
       </div>
     </MovableLayer>
   );

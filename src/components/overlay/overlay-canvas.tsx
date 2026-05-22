@@ -9,6 +9,8 @@ import { NbaHighlight } from "@/components/overlay/nba/nba-highlight";
 import { NbaCourtPositions } from "@/components/overlay/nba/nba-court-positions";
 import { NbaWebcamPanel } from "@/components/overlay/nba/nba-webcam-panel";
 import { NbaSocialFooter } from "@/components/overlay/nba/nba-social-footer";
+import { TeamLogoLayer } from "@/components/overlay/team-logo-layer";
+import { ScoreConfetti } from "@/components/overlay/score-confetti";
 import { MlbScoreboard } from "@/components/overlay/mlb/mlb-scoreboard";
 import { MlbLineScore } from "@/components/overlay/mlb/mlb-line-score";
 import { MlbBases } from "@/components/overlay/mlb/mlb-bases";
@@ -63,8 +65,11 @@ export const OverlayCanvas = memo(function OverlayCanvas({
           Doble clic = editar texto · Shift+arrastrar = selección · 8 handles resize
         </div>
       )}
+      <ScoreConfetti />
       {sport === "nba" && (
         <>
+          <TeamLogoLayer id="team-logo-home" side="home" interactive={interactive} widgetFilter={widget} />
+          <TeamLogoLayer id="team-logo-away" side="away" interactive={interactive} widgetFilter={widget} />
           <NbaCourtPositions widgetFilter={widget} interactive={interactive} />
           <NbaScorebug widgetFilter={widget} interactive={interactive} />
           <NbaQuintet widgetFilter={widget} interactive={interactive} />
@@ -76,6 +81,8 @@ export const OverlayCanvas = memo(function OverlayCanvas({
       )}
       {sport === "mlb" && (
         <>
+          <TeamLogoLayer id="team-logo-home" side="home" interactive={interactive} widgetFilter={widget} />
+          <TeamLogoLayer id="team-logo-away" side="away" interactive={interactive} widgetFilter={widget} />
           <MlbFieldPositions widgetFilter={widget} interactive={interactive} />
           <MlbScoreboard widgetFilter={widget} interactive={interactive} />
           <MlbLineScore widgetFilter={widget} interactive={interactive} />

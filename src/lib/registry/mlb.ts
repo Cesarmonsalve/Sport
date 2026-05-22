@@ -1,5 +1,6 @@
 import type { RegistryEntry } from "@/types";
 import { MLB_EXTENDED } from "@/lib/registry/mlb-extended";
+import { buildRosterAtoms } from "@/lib/registry/lineup-atoms";
 
 const entry = (
   id: string,
@@ -62,7 +63,16 @@ export const MLB_REGISTRY: Record<string, RegistryEntry> = {
   }),
 };
 
-Object.assign(MLB_REGISTRY, MLB_EXTENDED);
+const ROSTER_ATOMS = buildRosterAtoms();
+Object.assign(MLB_REGISTRY, MLB_EXTENDED, ROSTER_ATOMS);
+MLB_REGISTRY["roster-widget"].children = Object.keys(ROSTER_ATOMS);
+
+MLB_REGISTRY["team-logo-home"] = entry("team-logo-home", "Logo local (standalone)", "Logos", {
+  defaults: { left: "1600px", top: "40px", width: "80px", height: "80px" },
+});
+MLB_REGISTRY["team-logo-away"] = entry("team-logo-away", "Logo visitante (standalone)", "Logos", {
+  defaults: { left: "200px", top: "40px", width: "80px", height: "80px" },
+});
 
 export const MLB_PRESETS = {
   broadcast: {

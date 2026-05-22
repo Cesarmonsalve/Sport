@@ -1,5 +1,7 @@
 import type { RegistryEntry } from "@/types";
+import { LINEUP_PRESETS } from "@/lib/presets/lineup";
 import { NBA_EXTENDED } from "@/lib/registry/nba-extended";
+import { buildQuintetoAtoms } from "@/lib/registry/lineup-atoms";
 
 const entry = (
   id: string,
@@ -80,7 +82,16 @@ export const NBA_REGISTRY: Record<string, RegistryEntry> = {
   }),
 };
 
-Object.assign(NBA_REGISTRY, NBA_EXTENDED);
+const QUINTETO_ATOMS = buildQuintetoAtoms();
+Object.assign(NBA_REGISTRY, NBA_EXTENDED, QUINTETO_ATOMS);
+NBA_REGISTRY["quinteto-widget"].children = Object.keys(QUINTETO_ATOMS);
+
+NBA_REGISTRY["team-logo-home"] = entry("team-logo-home", "Logo local (standalone)", "Logos", {
+  defaults: { left: "1600px", top: "40px", width: "80px", height: "80px" },
+});
+NBA_REGISTRY["team-logo-away"] = entry("team-logo-away", "Logo visitante (standalone)", "Logos", {
+  defaults: { left: "200px", top: "40px", width: "80px", height: "80px" },
+});
 
 export const NBA_PRESETS = {
   broadcast: {
@@ -106,3 +117,5 @@ export const NBA_PRESETS = {
     },
   },
 } as const;
+
+export const NBA_LINEUP_PRESETS = LINEUP_PRESETS;

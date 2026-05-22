@@ -1,10 +1,19 @@
 /** ESPN Site API — shared shapes (partial, defensive parsing) */
 
+export interface EspnTeamLogo {
+  href?: string;
+  width?: number;
+  height?: number;
+  rel?: string[];
+  alt?: string;
+}
+
 export interface EspnTeamRef {
   id?: string;
   abbreviation?: string;
   displayName?: string;
   logo?: string;
+  logos?: EspnTeamLogo[];
 }
 
 export interface EspnAthlete {

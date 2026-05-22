@@ -1,6 +1,7 @@
 import { formatTodayEspn } from "@/lib/utils";
 import { espnFetch } from "@/lib/espn/client";
 import { resolveHeadshot } from "@/lib/espn/headshot";
+import { logosFromCompetitors, resolveTeamLogo } from "@/lib/espn/logos";
 import type {
   EspnAthlete,
   EspnCompetition,
@@ -27,7 +28,7 @@ function parseSide(ev: EspnEvent, side: "home" | "away") {
   return {
     abbr: t?.abbreviation ?? (side === "home" ? "LOC" : "VIS"),
     score: String(team?.score ?? "0"),
-    logo: t?.logo,
+    logo: resolveTeamLogo(t),
   };
 }
 
@@ -93,13 +94,14 @@ function parseLineScore(comp?: EspnCompetition): MlbLineScore | undefined {
 
 function rosterFromBox(
   data: EspnSummaryResponse,
-  abbr: string
+  abbr: string,
+  limit = 26
 ): MlbPlayer[] {
   const group = data.boxscore?.players?.find((g) => g.team?.abbreviation === abbr);
   const athletes = group?.statistics?.[0]?.athletes ?? [];
   const names = group?.statistics?.[0]?.names ?? [];
   const out: MlbPlayer[] = [];
-  for (const row of athletes.slice(0, 12)) {
+  for (const row of athletes.slice(0, limit)) {
     const a = row.athlete;
     if (!a?.id) continue;
     const avgIdx = names.indexOf("AVG");
@@ -137,8 +139,12 @@ export function parseMlbSummary(
     }))
     .filter((p) => p.text);
 
+  const logos = logosFromCompetitors(comp);
+
   return {
     ...base,
+    homeLogo: logos.home ?? base.homeLogo,
+    awayLogo: logos.away ?? base.awayLogo,
     inning,
     inningHalf: half,
     linescore: parseLineScore(comp) ?? base.linescore,

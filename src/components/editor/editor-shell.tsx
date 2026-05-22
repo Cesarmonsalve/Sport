@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { EditorSidebar } from "@/components/editor/editor-sidebar";
+import { PlayerGalleryPanel } from "@/components/editor/player-gallery-panel";
 import { EditorInspector } from "@/components/editor/editor-inspector";
 import { EditorCanvasPreview } from "@/components/editor/editor-canvas-preview";
 import { EditorHeader } from "@/components/editor/editor-header";
@@ -14,6 +15,7 @@ import { RotationToast } from "@/components/editor/rotation-toast";
 import { useStreamSync } from "@/hooks/use-stream-sync";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { resolveRoom } from "@/lib/sync/room";
+import { galleryFromMlbGame, galleryFromNbaGame } from "@/lib/espn/gallery";
 import { useEditorStore } from "@/lib/store/editor-store";
 import type { Sport } from "@/types";
 
@@ -30,6 +32,12 @@ export function EditorShell({ sport }: EditorShellProps) {
     setSport(sport);
     const event = searchParams.get("event");
     if (event) useEditorStore.getState().setEventId(event);
+    const s = useEditorStore.getState();
+    if (s.designMode) {
+      s.setGalleryPlayers(
+        sport === "nba" ? galleryFromNbaGame(s.nbaGame) : galleryFromMlbGame(s.mlbGame)
+      );
+    }
   }, [sport, setSport, searchParams]);
 
   useStreamSync(true, room);
@@ -40,6 +48,7 @@ export function EditorShell({ sport }: EditorShellProps) {
       <EditorHeader sport={sport} room={room} />
       <div className="flex min-h-0 flex-1">
         <EditorSidebar sport={sport} />
+        <PlayerGalleryPanel sport={sport} />
         <EditorCanvasPreview sport={sport} />
         <EditorInspector sport={sport} />
       </div>

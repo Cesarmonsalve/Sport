@@ -6,12 +6,17 @@ import type {
   EditorMode,
   ElementDataBinding,
   ElementStyle,
+  GalleryPlayer,
   MlbGameSnapshot,
   NbaGameSnapshot,
   PlayerSlotBinding,
   Sport,
   StreamSportsState,
+  WidgetDisplaySettings,
 } from "@/types";
+import { galleryFromMlbGame, galleryFromNbaGame } from "@/lib/espn/gallery";
+import { preloadTeamLogos } from "@/lib/espn/logos";
+import { LINEUP_PRESETS } from "@/lib/presets/lineup";
 import type { StreamTemplate } from "@/lib/templates/types";
 import { NBA_MOCK_GAME } from "@/lib/espn/nba";
 import { MLB_MOCK_GAME } from "@/lib/espn/mlb";
@@ -96,6 +101,10 @@ interface EditorStore {
   playerSlots: Record<string, PlayerSlotBinding>;
   rotationNotice: string | null;
   inlineEditId: string | null;
+  widgetSettings: Record<string, WidgetDisplaySettings>;
+  galleryPlayers: GalleryPlayer[];
+  confettiEnabled: boolean;
+  dropHighlightId: string | null;
 
   setSport: (s: Sport) => void;
   setRoom: (r: string) => void;
@@ -137,8 +146,22 @@ interface EditorStore {
   setRotationNotice: (msg: string | null) => void;
   setPlayerSlots: (slots: Record<string, PlayerSlotBinding>) => void;
   setInlineEditId: (id: string | null) => void;
+  setWidgetSettings: (widgetId: string, settings: WidgetDisplaySettings) => void;
+  applyLineupPreset: (presetId: string) => void;
+  setGalleryPlayers: (players: GalleryPlayer[]) => void;
+  assignGalleryPlayerToSlot: (slotId: string, player: GalleryPlayer) => void;
+  setConfettiEnabled: (v: boolean) => void;
+  setDropHighlightId: (id: string | null) => void;
+  syncTeamLogosFromGame: () => void;
   exportState: () => StreamSportsState;
 }
+
+const DEFAULT_WIDGET_SETTINGS: Record<string, WidgetDisplaySettings> = {
+  "quinteto-widget": { lineupDisplayMode: "full" },
+  "roster-widget": { lineupDisplayMode: "photo-text" },
+  "court-positions-widget": { markerStyle: "photo" },
+  "field-positions-widget": { markerStyle: "photo" },
+};
 
 export const useEditorStore = create<EditorStore>()(
   persist(
@@ -173,6 +196,10 @@ export const useEditorStore = create<EditorStore>()(
       playerSlots: {},
       rotationNotice: null,
       inlineEditId: null,
+      widgetSettings: { ...DEFAULT_WIDGET_SETTINGS },
+      galleryPlayers: [],
+      confettiEnabled: false,
+      dropHighlightId: null,
 
       setSport: (sport) =>
         set({
@@ -183,14 +210,28 @@ export const useEditorStore = create<EditorStore>()(
           selectedIds: [],
         }),
       setRoom: (room) => set({ room }),
-      setEventId: (eventId) => set({ eventId }),
+      setEventId: (eventId) => {
+        set({ eventId });
+        const g = get();
+        const game = g.sport === "nba" ? g.nbaGame : g.mlbGame;
+        preloadTeamLogos([game.homeLogo, game.awayLogo]);
+      },
       setDesignMode: (designMode) =>
-        set((s) => ({
-          designMode,
-          visibility: designMode ? designVisibility(s.sport) : defaultVisibility(s.sport),
-          nbaGame: designMode ? NBA_MOCK_GAME : s.nbaGame,
-          mlbGame: designMode ? MLB_MOCK_GAME : s.mlbGame,
-        })),
+        set((s) => {
+          const nbaGame = designMode ? NBA_MOCK_GAME : s.nbaGame;
+          const mlbGame = designMode ? MLB_MOCK_GAME : s.mlbGame;
+          return {
+            designMode,
+            visibility: designMode ? designVisibility(s.sport) : defaultVisibility(s.sport),
+            nbaGame,
+            mlbGame,
+            galleryPlayers: designMode
+              ? s.sport === "nba"
+                ? galleryFromNbaGame(nbaGame)
+                : galleryFromMlbGame(mlbGame)
+              : s.galleryPlayers,
+          };
+        }),
       setEditorMode: (editorMode) =>
         set({ editorMode, freeEditMode: editorMode === "advanced" }),
       setFreeEditMode: (freeEditMode) =>
@@ -269,6 +310,67 @@ export const useEditorStore = create<EditorStore>()(
       setPlayerSlots: (playerSlots) => set({ playerSlots }),
       setRotationNotice: (rotationNotice) => set({ rotationNotice }),
       setInlineEditId: (inlineEditId) => set({ inlineEditId }),
+      setWidgetSettings: (widgetId, settings) =>
+        set((s) => ({
+          widgetSettings: {
+            ...s.widgetSettings,
+            [widgetId]: { ...s.widgetSettings[widgetId], ...settings },
+          },
+        })),
+      applyLineupPreset: (presetId) => {
+        const preset = LINEUP_PRESETS[presetId];
+        if (!preset) return;
+        set((s) => {
+          const elements = { ...s.elements };
+          if (preset.elements) {
+            for (const [id, st] of Object.entries(preset.elements)) {
+              elements[id] = { ...elements[id], ...st };
+            }
+          }
+          return {
+            widgetSettings: { ...s.widgetSettings, ...preset.widgetSettings },
+            elements,
+          };
+        });
+      },
+      setGalleryPlayers: (galleryPlayers) => set({ galleryPlayers }),
+      assignGalleryPlayerToSlot: (slotId, player) => {
+        const label = `${player.name}${player.jersey ? ` #${player.jersey}` : ""} · ${player.teamAbbr}`;
+        set((s) => ({
+          dataBindings: {
+            ...s.dataBindings,
+            [slotId]: {
+              dataSource: "manual",
+              manualText: player.name,
+              manualImageUrl: player.headshot,
+              athleteId: player.id,
+              displayLabel: label,
+            },
+          },
+          playerSlots: {
+            ...s.playerSlots,
+            [slotId]: {
+              slotId,
+              athleteId: player.id,
+              team: player.team,
+              slotIndex: 0,
+              position: player.position,
+              dataSource: "manual",
+              manualName: player.name,
+              manualImageUrl: player.headshot,
+            },
+          },
+          rotationNotice: `Asignado: ${label}`,
+        }));
+        window.setTimeout(() => get().setRotationNotice(null), 2500);
+      },
+      setConfettiEnabled: (confettiEnabled) => set({ confettiEnabled }),
+      setDropHighlightId: (dropHighlightId) => set({ dropHighlightId }),
+      syncTeamLogosFromGame: () => {
+        const s = get();
+        const game = s.sport === "nba" ? s.nbaGame : s.mlbGame;
+        preloadTeamLogos([game.homeLogo, game.awayLogo]);
+      },
       applyStreamTemplate: (t) => {
         const s = get();
         const touched = new Set(s.userTouchedElements);
@@ -369,6 +471,9 @@ export const useEditorStore = create<EditorStore>()(
           editorMode: state.editorMode ?? s.editorMode,
           dataBindings: { ...s.dataBindings, ...state.dataBindings },
           userTouchedElements: state.userTouchedElements ?? s.userTouchedElements,
+          widgetSettings: { ...s.widgetSettings, ...state.widgetSettings },
+          galleryPlayers: state.galleryPlayers ?? s.galleryPlayers,
+          confettiEnabled: state.confettiEnabled ?? s.confettiEnabled,
           visibility: { ...s.visibility, ...state.visibility },
           positions: { ...s.positions, ...state.positions },
           elements: { ...s.elements, ...state.elements },
@@ -425,6 +530,9 @@ export const useEditorStore = create<EditorStore>()(
           elements: s.elements,
           textOverrides: s.textOverrides,
           zIndex: s.zIndex,
+          widgetSettings: { ...s.widgetSettings },
+          confettiEnabled: s.confettiEnabled,
+          galleryPlayers: s.galleryPlayers,
           game,
           ts: Date.now(),
         };
@@ -448,6 +556,8 @@ export const useEditorStore = create<EditorStore>()(
         templateId: s.templateId,
         templateName: s.templateName,
         playerSlots: s.playerSlots,
+        widgetSettings: s.widgetSettings,
+        confettiEnabled: s.confettiEnabled,
       }),
     }
   )

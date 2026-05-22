@@ -16,6 +16,7 @@ import {
   InspectorLayoutTab,
   InspectorTypographyTab,
 } from "@/components/editor/inspector-fields";
+import { WidgetDisplayControls } from "@/components/editor/widget-display-controls";
 import type { Sport, WidgetAnimation } from "@/types";
 
 interface EditorInspectorProps {
@@ -46,6 +47,8 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
   const duplicateElementAsCopy = useEditorStore((s) => s.duplicateElementAsCopy);
   const applyPreset = useEditorStore((s) => s.applyPreset);
   const textOverrides = useEditorStore((s) => s.textOverrides);
+  const confettiEnabled = useEditorStore((s) => s.confettiEnabled);
+  const setConfettiEnabled = useEditorStore((s) => s.setConfettiEnabled);
 
   const registry = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
   const presets = sport === "nba" ? NBA_PRESETS : MLB_PRESETS;
@@ -169,9 +172,20 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
                   binding={dataBindings[selectedId]}
                   setBinding={(b) => setDataBinding(selectedId, b)}
                 />
+                {(selectedId.startsWith("team-logo") || selectedId === "team-logo-h" || selectedId === "team-logo-v") && (
+                  <p className="mt-2 text-[10px] text-muted-foreground">
+                    Vacía URL en Imagen + fuente ESPN = logo automático del partido.
+                  </p>
+                )}
+                <WidgetDisplayControls widgetId={selectedId} />
               </TabsContent>
 
               <TabsContent value="vis" className="mt-3 space-y-3">
+                <WidgetDisplayControls widgetId={selectedId} />
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Confetti en gol</Label>
+                  <Switch checked={confettiEnabled} onCheckedChange={setConfettiEnabled} />
+                </div>
                 <div className="flex items-center justify-between">
                   <Label className="text-xs">Visible</Label>
                   <Switch

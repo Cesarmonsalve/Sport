@@ -6,6 +6,35 @@ export type WidgetAnimation = "none" | "fade" | "slide";
 
 export type DataSource = "espn" | "manual";
 
+export type LineupDisplayMode =
+  | "text-only"
+  | "photo-text"
+  | "photo-stats"
+  | "text-stats"
+  | "full"
+  | "photo-only";
+
+export type MarkerStyle = "photo" | "initials" | "dot" | "name";
+
+export interface WidgetDisplaySettings {
+  lineupDisplayMode?: LineupDisplayMode;
+  markerStyle?: MarkerStyle;
+}
+
+export interface GalleryPlayer {
+  id: string;
+  name: string;
+  jersey?: string;
+  headshot?: string;
+  team: "home" | "away";
+  teamAbbr: string;
+  position?: string;
+  points?: number;
+  rebounds?: number;
+  assists?: number;
+  avg?: string;
+}
+
 export type ElementStyle = Partial<{
   left: string;
   top: string;
@@ -43,6 +72,8 @@ export interface ElementDataBinding {
   manualText?: string;
   manualImageUrl?: string;
   espnField?: string;
+  athleteId?: string;
+  displayLabel?: string;
 }
 
 export interface PlayerSlotBinding {
@@ -76,6 +107,9 @@ export interface StreamSportsState {
   zIndex?: Record<string, number>;
   playerSlots?: Record<string, PlayerSlotBinding>;
   userTouchedElements?: string[];
+  widgetSettings?: Record<string, WidgetDisplaySettings>;
+  confettiEnabled?: boolean;
+  galleryPlayers?: GalleryPlayer[];
   game?: NbaGameSnapshot | MlbGameSnapshot;
   ts?: number;
 }

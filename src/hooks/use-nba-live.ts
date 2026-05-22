@@ -10,6 +10,11 @@ import {
   parseNbaSummary,
   type EspnNbaEvent,
 } from "@/lib/espn/nba";
+import {
+  extractGalleryFromSummary,
+  galleryFromNbaGame,
+} from "@/lib/espn/gallery";
+import { preloadTeamLogos } from "@/lib/espn/logos";
 import { mergeNbaPlayersToSlots } from "@/lib/espn/player-slots";
 import { useEditorStore } from "@/lib/store/editor-store";
 
@@ -24,6 +29,7 @@ export function useNbaLive(events: EspnNbaEvent[]) {
   const setNbaGame = useEditorStore((s) => s.setNbaGame);
   const setPlayerSlots = useEditorStore((s) => s.setPlayerSlots);
   const setRotationNotice = useEditorStore((s) => s.setRotationNotice);
+  const setGalleryPlayers = useEditorStore((s) => s.setGalleryPlayers);
   const prevGameRef = useRef(useEditorStore.getState().nbaGame);
   const prevIdsRef = useRef("");
 
@@ -44,6 +50,8 @@ export function useNbaLive(events: EspnNbaEvent[]) {
     const base = eventToNbaSnapshot(selected);
     if (!summaryQuery.data) {
       setNbaGame(base);
+      setGalleryPlayers(galleryFromNbaGame(base));
+      preloadTeamLogos([base.homeLogo, base.awayLogo]);
       return;
     }
     let parsed = parseNbaSummary(summaryQuery.data, base);
@@ -63,5 +71,21 @@ export function useNbaLive(events: EspnNbaEvent[]) {
     const merged = mergeNbaPlayersToSlots(parsed, slots);
     setPlayerSlots(merged.bindings);
     setNbaGame(merged.game);
-  }, [summaryQuery.data, selected, designMode, setNbaGame, setPlayerSlots, setRotationNotice]);
+    const gallery = extractGalleryFromSummary(
+      summaryQuery.data,
+      merged.game.homeAbbr,
+      merged.game.awayAbbr,
+      "nba"
+    );
+    setGalleryPlayers(gallery.length ? gallery : galleryFromNbaGame(merged.game));
+    preloadTeamLogos([merged.game.homeLogo, merged.game.awayLogo]);
+  }, [
+    summaryQuery.data,
+    selected,
+    designMode,
+    setNbaGame,
+    setPlayerSlots,
+    setRotationNotice,
+    setGalleryPlayers,
+  ]);
 }
