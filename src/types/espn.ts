@@ -66,6 +66,7 @@ export interface EspnEvent {
   id?: string;
   name?: string;
   shortName?: string;
+  date?: string;
   status?: { type?: { description?: string; state?: string } };
   competitions?: EspnCompetition[];
 }

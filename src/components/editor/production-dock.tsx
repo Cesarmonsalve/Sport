@@ -26,6 +26,7 @@ import {
   downloadProjectJson,
   parseProjectFile,
 } from "@/lib/project/io";
+import { formatGameStatus } from "@/lib/utils";
 import { buildThemeExport, downloadThemeJson, parseThemeFile } from "@/lib/theme/io";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
 import { MLB_REGISTRY } from "@/lib/registry/mlb";
@@ -202,7 +203,7 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
                   {events.map((ev) => (
                     <option key={ev.id} value={ev.id}>
                       {ev.state === "in" ? "🔴 " : ""}
-                      {ev.shortName || ev.name} · {ev.status}
+                      {ev.shortName || ev.name} · {formatGameStatus((ev as any).state || "pre", ev.status, (ev as any).date)}
                     </option>
                   ))}
                 </select>

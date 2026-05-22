@@ -17,6 +17,7 @@ export interface EspnMlbEvent {
   shortName: string;
   status: string;
   state: string;
+  date: string;
   home: { abbr: string; score: string; logo?: string };
   away: { abbr: string; score: string; logo?: string };
 }
@@ -43,6 +44,7 @@ export async function fetchMlbScoreboard(date?: string): Promise<EspnMlbEvent[]>
     shortName: String(ev.shortName ?? ""),
     status: String(ev.status?.type?.description ?? ""),
     state: String(ev.status?.type?.state ?? "pre"),
+    date: String(ev.date ?? ""),
     home: parseSide(ev, "home"),
     away: parseSide(ev, "away"),
   }));

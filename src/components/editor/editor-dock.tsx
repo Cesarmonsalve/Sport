@@ -2,6 +2,7 @@
 
 import { useEditorStore } from "@/lib/store/editor-store";
 import { useEspnPoll } from "@/hooks/use-espn-poll";
+import { formatGameStatus } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { Sport } from "@/types";
@@ -29,7 +30,7 @@ export function EditorDock({ sport }: EditorDockProps) {
         <option value="">— Seleccionar —</option>
         {events.map((ev) => (
           <option key={ev.id} value={ev.id}>
-            {ev.shortName || ev.name} · {ev.status}
+            {ev.shortName || ev.name} · {formatGameStatus((ev as any).state || "pre", ev.status, (ev as any).date)}
           </option>
         ))}
       </select>

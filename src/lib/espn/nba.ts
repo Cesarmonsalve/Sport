@@ -18,6 +18,7 @@ export interface EspnNbaEvent {
   shortName: string;
   status: string;
   state: string;
+  date: string;
   home: { abbr: string; score: string; logo?: string };
   away: { abbr: string; score: string; logo?: string };
 }
@@ -50,6 +51,7 @@ export async function fetchNbaScoreboard(date?: string): Promise<EspnNbaEvent[]>
     shortName: String(ev.shortName ?? ""),
     status: String(ev.status?.type?.description ?? ""),
     state: String(ev.status?.type?.state ?? "pre"),
+    date: String(ev.date ?? ""),
     home: parseCompetitor(ev, "home"),
     away: parseCompetitor(ev, "away"),
   }));
