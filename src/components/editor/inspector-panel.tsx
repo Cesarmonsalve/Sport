@@ -6,6 +6,10 @@ import {
   AlignLeft,
   AlignRight,
   AlignVerticalJustifyCenter,
+  Move,
+  Paintbrush,
+  Database,
+  Sparkles,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -64,10 +68,7 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
   const textOverrides = useEditorStore((s) => s.textOverrides);
   const confettiEnabled = useEditorStore((s) => s.confettiEnabled);
   const setConfettiEnabled = useEditorStore((s) => s.setConfettiEnabled);
-  const showSafeZone = useEditorStore((s) => s.showSafeZone);
-  const setShowSafeZone = useEditorStore((s) => s.setShowSafeZone);
-  const showRulers = useEditorStore((s) => s.showRulers);
-  const setShowRulers = useEditorStore((s) => s.setShowRulers);
+  const smartSlots = useEditorStore((s) => s.smartSlots);
   const sceneTransition = useEditorStore((s) => s.sceneTransition);
   const setSceneTransition = useEditorStore((s) => s.setSceneTransition);
   const sceneTransitionMs = useEditorStore((s) => s.sceneTransitionMs);
@@ -76,6 +77,9 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
   const registry = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
   const presets = sport === "nba" ? NBA_PRESETS : MLB_PRESETS;
   const entry = selectedId ? registry[selectedId] : null;
+  const smartSlot = selectedId ? smartSlots[selectedId] : null;
+  const layerLabel = entry?.label ?? smartSlot?.label ?? selectedId;
+  const hasSelection = !!selectedId && !!(entry || smartSlot);
   const style = selectedId ? elements[selectedId] ?? {} : {};
   const pos = selectedId ? positions[selectedId] : undefined;
   const multi = selectedIds.length >= 2;
@@ -93,36 +97,40 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
   };
 
   return (
-    <aside className="flex h-full w-[320px] shrink-0 flex-col border-l border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold">Inspector</h2>
-        <p className="text-xs text-muted-foreground font-mono truncate">
-          {entry ? entry.label : "Selecciona cualquier capa"}
+    <aside className="flex h-full w-[300px] shrink-0 flex-col border-l border-zinc-800 bg-zinc-950">
+      <div className="border-b border-zinc-800 px-4 py-3">
+        <h2 className="text-sm font-medium text-zinc-100">Inspector</h2>
+        <p className="text-xs text-zinc-500 truncate mt-0.5">
+          {hasSelection ? layerLabel : "Selecciona una capa"}
         </p>
       </div>
 
       <AnimatePresence mode="wait">
-        {selectedId && entry ? (
+        {hasSelection && selectedId ? (
           <motion.div
             key={selectedId}
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 8 }}
-            className="flex-1 overflow-y-auto p-3"
+            className="flex-1 overflow-y-auto p-4 space-y-2"
           >
             <Tabs defaultValue="position">
-              <TabsList className="w-full grid grid-cols-4 h-8">
-                <TabsTrigger value="position" className="text-[10px]">
-                  Posición
+              <TabsList className="w-full grid grid-cols-4 h-9 bg-zinc-900 border border-zinc-800 p-0.5">
+                <TabsTrigger value="position" className="text-[10px] gap-1 data-[state=active]:bg-zinc-800">
+                  <Move className="h-3 w-3" />
+                  <span className="hidden sm:inline">Pos</span>
                 </TabsTrigger>
-                <TabsTrigger value="style" className="text-[10px]">
-                  Estilo
+                <TabsTrigger value="style" className="text-[10px] gap-1 data-[state=active]:bg-zinc-800">
+                  <Paintbrush className="h-3 w-3" />
+                  <span className="hidden sm:inline">Estilo</span>
                 </TabsTrigger>
-                <TabsTrigger value="data" className="text-[10px]">
-                  Datos
+                <TabsTrigger value="data" className="text-[10px] gap-1 data-[state=active]:bg-zinc-800">
+                  <Database className="h-3 w-3" />
+                  <span className="hidden sm:inline">Datos</span>
                 </TabsTrigger>
-                <TabsTrigger value="anim" className="text-[10px]">
-                  Anim
+                <TabsTrigger value="anim" className="text-[10px] gap-1 data-[state=active]:bg-zinc-800">
+                  <Sparkles className="h-3 w-3" />
+                  <span className="hidden sm:inline">Anim</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -236,22 +244,6 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
                     </Button>
                   ))}
                 </div>
-                <div className="rounded border border-border p-2 space-y-2">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Reglas broadcast
-                  </p>
-                  <p className="text-[9px] text-muted-foreground">
-                    Safe zone 5% en 1920×1080 — margen típico TV/OBS.
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Mostrar safe zone</Label>
-                    <Switch checked={showSafeZone} onCheckedChange={setShowSafeZone} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Reglas px (bordes)</Label>
-                    <Switch checked={showRulers} onCheckedChange={setShowRulers} />
-                  </div>
-                </div>
                 {(selectedId === "nba-scorebug" || selectedId === "scoreboard") && (
                   <ScorebugStylePicker />
                 )}
@@ -293,7 +285,13 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
                     Vacía URL + fuente ESPN = logo automático del partido.
                   </p>
                 )}
-                <WidgetDisplayControls widgetId={selectedId} />
+                {entry && <WidgetDisplayControls widgetId={selectedId} />}
+                {smartSlot && (
+                  <p className="text-[10px] text-zinc-500 rounded-md bg-zinc-900/80 border border-zinc-800 px-2 py-2">
+                    Smart slot · {smartSlot.slotType}
+                    {smartSlot.team ? ` · ${smartSlot.team}` : ""}
+                  </p>
+                )}
                 {(selectedId === "broadcast-ticker" || selectedId === "sponsor-ticker") && (
                   <TickerInspector />
                 )}
@@ -399,9 +397,9 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
             </Tabs>
           </motion.div>
         ) : (
-          <p className="p-4 text-xs text-muted-foreground">
-            Selecciona una capa del canvas o del panel Capas. Atajos: H ocultar · L bloquear ·
-            Space vista limpia.
+          <p className="p-4 text-xs text-zinc-500 leading-relaxed">
+            Selecciona un widget o smart slot en el canvas. Atajos: H ocultar · L bloquear ·
+            Ctrl+G agrupar.
           </p>
         )}
       </AnimatePresence>

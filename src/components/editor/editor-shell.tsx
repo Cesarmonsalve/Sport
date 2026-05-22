@@ -56,7 +56,7 @@ export function EditorShell({ sport }: EditorShellProps) {
 
   return (
     <EditorSyncProvider publishNow={publishNow}>
-    <div className="flex h-screen max-w-[100vw] flex-col overflow-hidden bg-background">
+    <div className="flex h-screen max-w-[100vw] flex-col overflow-hidden bg-zinc-950">
       <EditorHeader sport={sport} room={room} />
       <div className="flex min-h-0 flex-1">
         <EditorSidebar sport={sport} />

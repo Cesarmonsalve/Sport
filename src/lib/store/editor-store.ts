@@ -321,7 +321,7 @@ export const useEditorStore = create<EditorStore>()(
       canvasBackground: { preset: "none", darken: 0, blur: 0 },
       previewMode: false,
       showSafeZone: false,
-      showRulers: true,
+      showRulers: false,
       canvasZoom: 0.5,
       canvasPan: { x: 0, y: 0 },
       canvasFitMode: "fit",

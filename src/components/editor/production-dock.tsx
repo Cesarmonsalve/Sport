@@ -72,7 +72,6 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
   const importState = useEditorStore((s) => s.importState);
   const importTheme = useEditorStore((s) => s.importTheme);
   const savePositionsNow = useEditorStore((s) => s.savePositionsNow);
-  const resetCanvasLayout = useEditorStore((s) => s.resetCanvasLayout);
 
   const { events, isLoading, isFetching, dataUpdatedAt, refetch } = useEspnPoll(sport);
   const settings = loadAppSettings();
@@ -291,27 +290,11 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
               ))}
             </TabsContent>
 
-            <TabsContent value="project" className="mt-2 flex flex-wrap gap-2">
-              <Button
-                variant="default"
-                size="sm"
-                className="text-xs"
-                onClick={() => savePositionsNow()}
-              >
-                Guardar posiciones
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => {
-                  if (window.confirm("¿Reiniciar todas las posiciones del canvas?")) {
-                    resetCanvasLayout();
-                  }
-                }}
-              >
-                Reiniciar canvas
-              </Button>
+            <TabsContent value="project" className="mt-2 space-y-2">
+              <p className="text-[10px] text-zinc-500">
+                Guardar / reiniciar canvas: menú <strong className="text-zinc-400">Canvas</strong> en el header.
+              </p>
+              <div className="flex flex-wrap gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -345,6 +328,7 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
               >
                 Solo tema JSON
               </Button>
+              </div>
               <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={onImport} />
             </TabsContent>
 

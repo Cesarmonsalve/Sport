@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
-import "./broadcast-rules.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,10 +27,6 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark">
       <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500;600&family=Bebas+Neue&family=Exo+2:wght@400;700&family=Outfit:wght@300;400;600&family=Rajdhani:wght@500;600;700&family=Roboto+Mono:wght@400;700&family=VT323&display=swap"
-          rel="stylesheet"
-        />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body

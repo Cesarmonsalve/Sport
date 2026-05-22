@@ -67,9 +67,9 @@ function RemoteControlInner() {
   const live = syncStatus.includes("connected");
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6 max-w-md mx-auto">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-6 max-w-md mx-auto sm:max-w-lg">
       <div className="flex items-center justify-between mb-6">
-        <Link href="/" className="text-sm font-semibold">
+        <Link href="/" className="text-sm font-medium text-zinc-100">
           Stream Sports
         </Link>
         <Badge variant={live ? "success" : "secondary"} className="font-mono text-[10px]">

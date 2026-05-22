@@ -21,19 +21,18 @@
 
 :root {
   --radius: 0.5rem;
-  --background: #0a0b0f;
-  --foreground: #e8eaef;
-  --card: #12141a;
-  --card-foreground: #e8eaef;
-  --border: rgba(255, 255, 255, 0.08);
-  --muted: #1a1d26;
-  --muted-foreground: #8b92a5;
-  --accent: #2a2f3d;
-  --accent-foreground: #e8eaef;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #18181b;
+  --card-foreground: #fafafa;
+  --border: #27272a;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #3f3f46;
+  --accent-foreground: #fafafa;
   --primary: #3b82f6;
   --primary-foreground: #fff;
-  --nba-cyan: #00b8d4;
-  --mlb-gold: #c9a227;
+  --ss-guide-color: rgba(59, 130, 246, 0.45);
 }
 
 * {
@@ -315,4 +314,85 @@ body {
   to {
     opacity: 1;
   }
+}
+
+/* Editor snap guides (subtle, no safe-zone overlay) */
+.ss-align-guide-v,
+.ss-align-guide-h {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9001;
+  background: var(--ss-guide-color);
+}
+
+.ss-align-guide-v {
+  width: 1px;
+  top: 0;
+  bottom: 0;
+}
+
+.ss-align-guide-h {
+  height: 1px;
+  left: 0;
+  right: 0;
+}
+
+.ss-editor-viewport {
+  background: #09090b;
+}
+
+.ss-editor-canvas-card {
+  border-radius: 12px;
+  border: 1px solid #27272a;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 24px 48px -12px rgba(0, 0, 0, 0.65);
+}
+
+/* Widget design variants (overlay) */
+[data-variant="glass"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+}
+
+[data-variant="neon"] {
+  background: #18181b !important;
+  border: 1px solid var(--ss-color, #3b82f6) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.25) !important;
+  color: #fff !important;
+}
+
+[data-variant="metallic"] {
+  background: linear-gradient(135deg, #3f3f46 0%, #27272a 100%) !important;
+  border: 1px solid #52525b !important;
+  border-radius: 6px !important;
+}
+
+[data-variant="tech-border"] {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 0 0 1px var(--ss-color, #3b82f6) !important;
+  border-radius: 6px !important;
+}
+
+[data-variant="minimal"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+[data-variant="broadcast-plate"] {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.7) 100%) !important;
+  border-left: 3px solid var(--ss-color, #3b82f6) !important;
+  border-radius: 4px !important;
+}
+
+[data-variant="neon-accent"] {
+  background: rgba(24, 24, 27, 0.92) !important;
+  border: 1px solid var(--ss-color, #3b82f6) !important;
+  border-radius: 8px !important;
 }

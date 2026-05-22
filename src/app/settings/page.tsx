@@ -35,9 +35,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="mx-auto flex max-w-lg items-center justify-between px-6 py-6">
-        <Link href="/" className="text-sm font-semibold">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <nav className="mx-auto flex max-w-lg items-center justify-between px-6 py-5 border-b border-zinc-800">
+        <Link href="/" className="text-sm font-medium text-zinc-100 hover:text-white">
           Stream Sports
         </Link>
         <Link href="/editor/nba" className="text-xs text-muted-foreground hover:text-foreground">

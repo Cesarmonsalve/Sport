@@ -130,11 +130,6 @@ export const OverlayCanvas = memo(function OverlayCanvas({
           style={{ opacity: (canvasBackground?.darken ?? 0) / 100 }}
         />
       )}
-      {designMode && (
-        <div className="absolute left-1/2 top-2 z-50 -translate-x-1/2 rounded bg-amber-500/20 px-3 py-1 text-xs text-amber-200">
-          Doble clic = editar texto · Shift+arrastrar = selección · 8 handles resize
-        </div>
-      )}
       <ScoreConfetti />
       <SmartSlotLayer sport={sport} interactive={interactive} />
       <FreeCanvasLayer interactive={interactive} />

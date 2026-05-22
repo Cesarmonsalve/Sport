@@ -33,7 +33,6 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
   const setSelectedIds = useEditorStore((s) => s.setSelectedIds);
   const placeFreeDrop = useEditorStore((s) => s.placeFreeDrop);
   const streamSafe = useEditorStore((s) => s.streamSafePreview);
-  const showHints = useEditorStore((s) => s.showEditorHints);
   const canvasZoom = useEditorStore((s) => s.canvasZoom);
   const setCanvasZoom = useEditorStore((s) => s.setCanvasZoom);
   const canvasPan = useEditorStore((s) => s.canvasPan);
@@ -81,13 +80,6 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
     setCanvasZoom(fitScale);
     setCanvasPan({ x: 0, y: 0 });
   }, [fitScale, setCanvasFitMode, setCanvasPan, setCanvasZoom]);
-
-  const onFitWidth = useCallback(() => {
-    const w = viewportRef.current?.clientWidth ?? 900;
-    setCanvasFitMode("fit-width");
-    setCanvasZoom(Math.min(w / CANVAS_W, 1));
-    setCanvasPan({ x: 0, y: 0 });
-  }, [setCanvasFitMode, setCanvasPan, setCanvasZoom]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -226,23 +218,18 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
     : null;
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 bg-[#06070a]">
+    <div className="relative flex flex-1 flex-col min-h-0 ss-editor-viewport">
       <div
         ref={viewportRef}
-        className="flex flex-1 items-center justify-center overflow-auto p-4"
+        className="flex flex-1 items-center justify-center overflow-auto p-8"
         style={{ cursor: spaceHeld.current ? "grab" : undefined }}
         onPointerDown={onViewportPointerDown}
         onPointerMove={onViewportPointerMove}
         onPointerUp={onViewportPointerUp}
       >
-        {showHints && (
-          <p className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-lg text-center text-[10px] text-muted-foreground pointer-events-none">
-            Ctrl+rueda zoom · Space+arrastrar pan · Shift+box selección
-          </p>
-        )}
         <motion.div
           layout
-          className="relative rounded-lg border border-border shadow-2xl shrink-0"
+          className="relative shrink-0 ss-editor-canvas-card"
           style={{
             width: CANVAS_W * scale,
             height: CANVAS_H * scale,
@@ -252,7 +239,7 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
           <CanvasScaleContext.Provider value={scale}>
             <div
               ref={canvasRef}
-              className="relative overflow-hidden rounded-lg bg-black/40"
+              className="relative overflow-hidden rounded-[11px] bg-zinc-950"
               style={{ width: CANVAS_W * scale, height: CANVAS_H * scale }}
               onDrop={onCanvasDrop}
               onDragOver={onDragOver}
@@ -274,7 +261,7 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
           />
         )}
       </div>
-      <CanvasToolbar onFit={onFit} onFitWidth={onFitWidth} />
+      <CanvasToolbar onFit={onFit} />
     </div>
   );
 }

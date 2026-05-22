@@ -5,11 +5,12 @@ import { motion } from "framer-motion";
 import {
   Layers,
   LayoutGrid,
-  Settings,
-  Radio,
+  Database,
+  ImageIcon,
   ChevronLeft,
   ChevronRight,
   Eye,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -25,10 +26,10 @@ import type { Sport } from "@/types";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { id: "overlays", icon: Layers, label: "Overlays" },
+  { id: "layers", icon: Layers, label: "Capas" },
   { id: "widgets", icon: LayoutGrid, label: "Widgets" },
-  { id: "data", icon: Radio, label: "Datos" },
-  { id: "config", icon: Settings, label: "Config" },
+  { id: "data", icon: Database, label: "Datos" },
+  { id: "env", icon: ImageIcon, label: "Fondo" },
 ] as const;
 
 interface EditorSidebarProps {
@@ -36,7 +37,7 @@ interface EditorSidebarProps {
 }
 
 export function EditorSidebar({ sport }: EditorSidebarProps) {
-  const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overlays");
+  const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("layers");
   const collapsed = useEditorStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useEditorStore((s) => s.toggleSidebar);
   const registry = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
@@ -68,88 +69,89 @@ export function EditorSidebar({ sport }: EditorSidebarProps) {
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 56 : 220 }}
-      className="flex h-full shrink-0 flex-col border-r border-border bg-card"
+      animate={{ width: collapsed ? 52 : 240 }}
+      className="flex h-full shrink-0 flex-col border-r border-zinc-800 bg-zinc-950"
     >
-      <div className="flex h-12 items-center justify-between border-b border-border px-2">
+      <div className="flex h-11 items-center justify-between border-b border-zinc-800 px-2">
         {!collapsed && (
-          <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Capas
-          </span>
+          <span className="px-2 text-xs font-medium text-zinc-400">Panel</span>
         )}
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="ml-auto">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="ml-auto h-8 w-8 text-zinc-500 hover:text-zinc-200"
+        >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
 
-      {!collapsed && (
-        <nav className="flex gap-1 border-b border-border p-2">
-          {NAV.map(({ id, icon: Icon, label }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveNav(id)}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 rounded-md py-1.5 text-[10px] transition-colors",
-                activeNav === id
-                  ? "bg-primary/15 text-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-              title={label}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
-        </nav>
+      <nav className={cn("flex flex-col gap-0.5 p-2", collapsed && "items-center")}>
+        {NAV.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveNav(id)}
+            title={label}
+            className={cn(
+              "flex items-center gap-2 rounded-md transition-colors",
+              collapsed ? "h-9 w-9 justify-center" : "w-full px-2.5 py-2",
+              activeNav === id
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="text-xs">{label}</span>}
+          </button>
+        ))}
+      </nav>
+
+      {!collapsed && activeNav !== "env" && activeNav !== "data" && (
+        <div className="border-t border-zinc-800 px-2 py-2">
+          <CollapsiblePlayerGallery sport={sport} />
+        </div>
       )}
 
-      {!collapsed && <CollapsiblePlayerGallery sport={sport} />}
-
-      {!collapsed && (
-        <div className="border-b border-border p-2 space-y-1">
+      {!collapsed && activeNav === "widgets" && (
+        <div className="border-b border-zinc-800 px-2 pb-2 space-y-2">
           <Input
-            className="h-7 text-xs"
+            className="h-8 text-xs bg-zinc-900 border-zinc-800"
             placeholder="Buscar widget…"
             value={widgetSearch}
             onChange={(e) => setWidgetSearch(e.target.value)}
           />
-          <div className="flex flex-wrap gap-1">
-            <button
-              type="button"
-              className="text-[9px] rounded px-1.5 py-0.5 bg-muted hover:bg-accent"
-              onClick={() => addFreeElement("free-text")}
-            >
-              + Texto
-            </button>
-            <button
-              type="button"
-              className="text-[9px] rounded px-1.5 py-0.5 bg-muted hover:bg-accent"
-              onClick={() => addFreeElement("free-image")}
-            >
-              + Imagen
-            </button>
-            <button
-              type="button"
-              className="text-[9px] rounded px-1.5 py-0.5 bg-muted hover:bg-accent"
-              onClick={() => addFreeElement("free-rect")}
-            >
-              + Rect
-            </button>
+          <div className="flex gap-1">
+            {(
+              [
+                ["free-text", "Texto"],
+                ["free-image", "Img"],
+                ["free-rect", "Rect"],
+              ] as const
+            ).map(([type, label]) => (
+              <button
+                key={type}
+                type="button"
+                className="flex flex-1 items-center justify-center gap-0.5 rounded-md border border-zinc-800 py-1 text-[10px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                onClick={() => addFreeElement(type)}
+              >
+                <Plus className="h-3 w-3" />
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto px-2 pb-2">
         {!collapsed && activeNav === "data" && <EspnRosterPanel sport={sport} />}
-        {!collapsed && activeNav === "config" && <CanvasBackgroundPanel />}
-        {!collapsed && activeNav === "overlays" && <LayerPanel sport={sport} />}
-        {!collapsed && activeNav === "widgets" &&
+        {!collapsed && activeNav === "env" && <CanvasBackgroundPanel />}
+        {!collapsed && activeNav === "layers" && <LayerPanel sport={sport} />}
+        {!collapsed &&
+          activeNav === "widgets" &&
           Object.entries(byCat).map(([cat, items]) => (
             <div key={cat} className="mb-4">
-              <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {cat}
-              </p>
+              <p className="mb-1.5 px-1 text-[10px] font-medium text-zinc-600">{cat}</p>
               <ul className="space-y-0.5">
                 {items.map((item) => (
                   <li key={item.id}>
@@ -157,13 +159,13 @@ export function EditorSidebar({ sport }: EditorSidebarProps) {
                       type="button"
                       onClick={() => setSelectedId(item.id)}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
+                        "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs transition-colors",
                         selectedId === item.id
-                          ? "bg-primary/15 text-foreground"
-                          : "hover:bg-accent"
+                          ? "bg-blue-500/10 text-zinc-100 ring-1 ring-blue-500/30"
+                          : "text-zinc-400 hover:bg-zinc-900"
                       )}
                     >
-                      <Eye className="h-3 w-3 shrink-0 opacity-50" />
+                      <Eye className="h-3.5 w-3.5 shrink-0 opacity-40" />
                       <span className="truncate flex-1">{item.label}</span>
                       <Switch
                         checked={visibility[item.id] !== false}
