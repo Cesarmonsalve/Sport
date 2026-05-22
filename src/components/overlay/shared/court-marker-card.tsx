@@ -35,8 +35,12 @@ export const CourtMarkerCard = memo(function CourtMarkerCard({
   groupParent,
   interactive = false,
 }: CourtMarkerCardProps) {
-  const style = markerStyle;
-  const usePhoto = showPhoto && style === "photo" && !!player?.headshot;
+  const isCourtField =
+    groupParent === "court-positions-widget" || groupParent === "field-positions-widget";
+  const style =
+    isCourtField && markerStyle === "photo" ? "name" : markerStyle;
+  const usePhoto =
+    !isCourtField && showPhoto && style === "photo" && !!player?.headshot;
 
   return (
     <MovableLayer

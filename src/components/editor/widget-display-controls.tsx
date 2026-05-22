@@ -24,7 +24,7 @@ export function WidgetDisplayControls({ widgetId }: Props) {
   if (LINEUP_WIDGETS.has(widgetId)) {
     return (
       <div className="space-y-2 mt-3 border-t border-border pt-3">
-        <Label className="text-xs font-semibold">Tarjetas de jugador</Label>
+        <Label className="text-xs font-semibold">Tarjetas de jugador (fotos aquí)</Label>
         <select
           className="w-full h-8 rounded-md border border-border bg-muted/50 text-xs px-2"
           value={settings?.lineupPreset ?? "full"}
@@ -83,27 +83,29 @@ export function WidgetDisplayControls({ widgetId }: Props) {
   if (MARKER_WIDGETS.has(widgetId)) {
     return (
       <div className="space-y-2 mt-3 border-t border-border pt-3">
-        <Label className="text-xs font-semibold">Mini tarjeta posición</Label>
+        <Label className="text-xs font-semibold">Marcador en cancha/campo</Label>
+        <p className="text-[9px] text-muted-foreground">
+          Solo nombre o iniciales. Las fotos van en quinteto, roster o tarjetas de jugador.
+        </p>
         <select
           className="w-full h-8 rounded-md border border-border bg-muted/50 text-xs px-2"
-          value={settings?.markerStyle ?? "photo"}
+          value={settings?.markerStyle === "photo" ? "name" : (settings?.markerStyle ?? "name")}
           onChange={(e) =>
             setWidgetSettings(widgetId, {
               markerStyle: e.target.value as MarkerStyle,
+              markerShowPhoto: false,
             })
           }
         >
-          <option value="photo">Con foto</option>
-          <option value="initials">Iniciales</option>
           <option value="name">Solo nombre</option>
+          <option value="initials">Iniciales</option>
           <option value="dot">Punto</option>
         </select>
-        <div className="flex items-center justify-between">
-          <Label className="text-[10px]">Mostrar foto</Label>
-          <Switch
-            checked={settings?.markerShowPhoto !== false}
-            onCheckedChange={(v) => setWidgetSettings(widgetId, { markerShowPhoto: v })}
-          />
+        <div className="flex items-center justify-between opacity-50">
+          <Label className="text-[10px]" title="Fotos solo en lineup / tarjetas">
+            Mostrar foto
+          </Label>
+          <Switch checked={false} disabled title="Fotos solo en quinteto y roster" />
         </div>
       </div>
     );

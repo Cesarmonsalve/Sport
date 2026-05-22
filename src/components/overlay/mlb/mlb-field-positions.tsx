@@ -2,7 +2,6 @@
 
 import { memo } from "react";
 import { MovableLayer } from "@/components/overlay/movable-layer";
-import { PlayerHeadshot } from "@/components/ui/player-headshot";
 import { useEditorStore, selectMlbGame } from "@/lib/store/editor-store";
 import { shouldShowWidget } from "@/lib/overlay/widget-filter";
 import type { MarkerStyle } from "@/types";
@@ -36,9 +35,10 @@ export const MlbFieldPositions = memo(function MlbFieldPositions({
 }: Props) {
   const game = useEditorStore(selectMlbGame);
   const dataBindings = useEditorStore((s) => s.dataBindings);
-  const markerStyle =
+  const rawStyle =
     (useEditorStore((s) => s.widgetSettings["field-positions-widget"]?.markerStyle) as MarkerStyle) ??
-    "photo";
+    "name";
+  const markerStyle: MarkerStyle = rawStyle === "photo" ? "name" : rawStyle;
 
   if (!shouldShowWidget(widgetFilter, "field-positions-widget")) return null;
 
@@ -75,10 +75,7 @@ export const MlbFieldPositions = memo(function MlbFieldPositions({
               {markerStyle === "initials" && (
                 <span className="text-sm font-bold">{initials(p?.name ?? s.label)}</span>
               )}
-              {markerStyle === "photo" && (
-                <PlayerHeadshot src={p?.headshot} alt={p?.name ?? ""} size={36} sport="mlb" />
-              )}
-              {(markerStyle === "name" || markerStyle === "photo") && (
+              {markerStyle === "name" && (
                 <p className="text-xs truncate max-w-[100px]">{p?.name?.split(" ").pop() ?? "—"}</p>
               )}
               {label && (

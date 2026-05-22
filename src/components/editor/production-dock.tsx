@@ -70,6 +70,8 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
   const exportState = useEditorStore((s) => s.exportState);
   const importState = useEditorStore((s) => s.importState);
   const importTheme = useEditorStore((s) => s.importTheme);
+  const savePositionsNow = useEditorStore((s) => s.savePositionsNow);
+  const resetCanvasLayout = useEditorStore((s) => s.resetCanvasLayout);
 
   const { events, isLoading, isFetching, dataUpdatedAt, refetch } = useEspnPoll(sport);
   const settings = loadAppSettings();
@@ -286,6 +288,34 @@ export function ProductionDock({ sport, room }: ProductionDockProps) {
             </TabsContent>
 
             <TabsContent value="project" className="mt-2 flex flex-wrap gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                className="text-xs"
+                onClick={() => savePositionsNow()}
+              >
+                Guardar posiciones
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  if (window.confirm("¿Reiniciar todas las posiciones del canvas?")) {
+                    resetCanvasLayout();
+                  }
+                }}
+              >
+                Reiniciar canvas
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => savePositionsNow({ exportTheme: true })}
+              >
+                Guardar + tema JSON
+              </Button>
               <Button variant="outline" size="sm" onClick={onExportProject}>
                 <Download className="h-3.5 w-3.5" />
                 Exportar proyecto

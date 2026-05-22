@@ -13,7 +13,10 @@ import {
   Undo2,
   Redo2,
   Smartphone,
+  RotateCcw,
+  Save,
 } from "lucide-react";
+import { ResetCanvasDialog } from "@/components/editor/reset-canvas-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -29,6 +32,7 @@ interface EditorHeaderProps {
 
 export function EditorHeader({ sport, room }: EditorHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const designMode = useEditorStore((s) => s.designMode);
   const setDesignMode = useEditorStore((s) => s.setDesignMode);
   const freeEditMode = useEditorStore((s) => s.freeEditMode);
@@ -44,6 +48,8 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
   const redo = useEditorStore((s) => s.redo);
   const historyIndex = useEditorStore((s) => s._historyIndex);
   const historyLen = useEditorStore((s) => s._history.length);
+  const resetCanvasLayout = useEditorStore((s) => s.resetCanvasLayout);
+  const savePositionsNow = useEditorStore((s) => s.savePositionsNow);
 
   const overlayBase = appendRoomToPath(`/overlay/${sport}`, room);
   const remoteUrl = appendRoomToPath("/remote", room);
@@ -99,6 +105,35 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1 hidden lg:flex"
+          onClick={() => savePositionsNow()}
+          title="Guardar en localStorage y sync MQTT"
+        >
+          <Save className="h-3.5 w-3.5" />
+          Guardar posiciones
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1 hidden md:flex text-amber-200 border-amber-500/40 hover:bg-amber-500/10"
+          onClick={() => setResetOpen(true)}
+          title="Restaurar layout de plantilla"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Reiniciar canvas
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 md:hidden"
+          onClick={() => savePositionsNow()}
+          title="Guardar posiciones"
+        >
+          <Save className="h-4 w-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -202,6 +237,15 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
           </Link>
         </Button>
       </div>
+
+      <ResetCanvasDialog
+        open={resetOpen}
+        onCancel={() => setResetOpen(false)}
+        onConfirm={() => {
+          resetCanvasLayout();
+          setResetOpen(false);
+        }}
+      />
     </header>
   );
 }

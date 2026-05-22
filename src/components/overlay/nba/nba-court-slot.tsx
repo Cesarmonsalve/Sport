@@ -51,8 +51,8 @@ export const NbaCourtSlot = memo(function NbaCourtSlot({
       label={label}
       player={player}
       bindingLabel={bindingLabel}
-      markerStyle={ws?.markerStyle ?? "photo"}
-      showPhoto={ws?.markerShowPhoto !== false}
+      markerStyle={ws?.markerStyle ?? "name"}
+      showPhoto={false}
       accentClass={team === "home" ? "ss-accent-home" : "ss-accent-away"}
       groupParent="court-positions-widget"
       interactive={interactive}

@@ -42,8 +42,8 @@ export const LINEUP_PRESETS: Record<
         showStats: false,
         showName: true,
       },
-      "court-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
-      "field-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
+      "court-positions-widget": { markerStyle: "name", markerShowPhoto: false },
+      "field-positions-widget": { markerStyle: "name", markerShowPhoto: false },
     },
   },
   "lineup-stats-heavy": {

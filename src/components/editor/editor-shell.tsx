@@ -12,6 +12,7 @@ import { EditorTemplateSelector } from "@/components/editor/editor-template-sele
 import { EditorContextMenu } from "@/components/editor/editor-context-menu";
 import { RotationToast } from "@/components/editor/rotation-toast";
 import { SelectionFloatingToolbar } from "@/components/editor/selection-floating-toolbar";
+import { EditorSyncProvider } from "@/components/editor/editor-sync-context";
 import { useStreamSync } from "@/hooks/use-stream-sync";
 import { useEditorShortcuts } from "@/hooks/use-editor-shortcuts";
 import { resolveRoom } from "@/lib/sync/room";
@@ -43,10 +44,18 @@ export function EditorShell({ sport }: EditorShellProps) {
     }
   }, [sport, setSport, searchParams]);
 
-  useStreamSync(true, room);
+  const { publishNow } = useStreamSync(true, room);
+  const registerLayoutPublisher = useEditorStore((s) => s.registerLayoutPublisher);
+
+  useEffect(() => {
+    registerLayoutPublisher(publishNow);
+    return () => registerLayoutPublisher(null);
+  }, [publishNow, registerLayoutPublisher]);
+
   useEditorShortcuts();
 
   return (
+    <EditorSyncProvider publishNow={publishNow}>
     <div className="flex h-screen max-w-[100vw] flex-col overflow-hidden bg-background">
       <EditorHeader sport={sport} room={room} />
       <div className="flex min-h-0 flex-1">
@@ -61,5 +70,6 @@ export function EditorShell({ sport }: EditorShellProps) {
       <RotationToast />
       <SelectionFloatingToolbar />
     </div>
+    </EditorSyncProvider>
   );
 }

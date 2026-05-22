@@ -34,6 +34,8 @@ import { MLB_REGISTRY } from "@/lib/registry/mlb";
 import type { ThemeExport } from "@/lib/theme/io";
 import { getSceneById } from "@/lib/scenes/broadcast-scenes";
 import { getTemplateById } from "@/lib/templates";
+import { isFreeLayoutId, resolveLayoutDefaults } from "@/lib/layout/defaults";
+import { buildThemeExport, downloadThemeJson } from "@/lib/theme/io";
 
 function defaultPositions(sport: Sport): Record<string, { left: string; top: string }> {
   const reg = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
@@ -135,6 +137,7 @@ interface EditorStore {
   canvasPan: { x: number; y: number };
   canvasFitMode: "fit" | "fit-width" | "manual";
   alignmentGuides: AlignmentGuides | null;
+  _layoutPublisher: (() => void) | null;
   _history: EditorHistorySnap[];
   _historyIndex: number;
 
@@ -221,14 +224,17 @@ interface EditorStore {
   unlockElement: (id: string) => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
+  registerLayoutPublisher: (fn: (() => void) | null) => void;
+  resetCanvasLayout: () => void;
+  savePositionsNow: (opts?: { exportTheme?: boolean }) => void;
   exportState: () => StreamSportsState;
 }
 
 const DEFAULT_WIDGET_SETTINGS: Record<string, WidgetDisplaySettings> = {
   "quinteto-widget": { lineupPreset: "full" },
   "roster-widget": { lineupPreset: "name-photo" },
-  "court-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
-  "field-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
+  "court-positions-widget": { markerStyle: "name", markerShowPhoto: false },
+  "field-positions-widget": { markerStyle: "name", markerShowPhoto: false },
   "sponsor-ticker": {
     sponsorLines: ["Patrocinador A", "Patrocinador B", "stream-sports.live"],
   },
@@ -305,6 +311,7 @@ export const useEditorStore = create<EditorStore>()(
       canvasPan: { x: 0, y: 0 },
       canvasFitMode: "fit",
       alignmentGuides: null,
+      _layoutPublisher: null,
       _history: [captureHistorySnap({
         positions: defaultPositions("nba"),
         elements: {},
@@ -903,6 +910,64 @@ export const useEditorStore = create<EditorStore>()(
             ]),
           ],
         })),
+      registerLayoutPublisher: (fn) => set({ _layoutPublisher: fn }),
+      resetCanvasLayout: () => {
+        const s = get();
+        get().pushHistory();
+        const { positions, elements, visibility } = resolveLayoutDefaults(
+          s.sport,
+          s.templateId
+        );
+
+        const cleanPos = { ...positions };
+        const cleanVis = { ...visibility };
+        const cleanEl = { ...elements };
+        const cleanZ: Record<string, number> = {};
+
+        for (const key of Object.keys(s.positions)) {
+          if (isFreeLayoutId(key)) delete cleanPos[key];
+        }
+        for (const key of Object.keys(s.visibility)) {
+          if (isFreeLayoutId(key)) delete cleanVis[key];
+        }
+        for (const key of Object.keys(s.elements)) {
+          if (isFreeLayoutId(key)) delete cleanEl[key];
+        }
+
+        set({
+          positions: cleanPos,
+          elements: cleanEl,
+          visibility: cleanVis,
+          zIndex: cleanZ,
+          textOverrides: {},
+          freeElements: [],
+          userTouchedElements: [],
+          dirtyIds: [],
+          selectedId: null,
+          selectedIds: [],
+          widgetSettings: {
+            ...s.widgetSettings,
+            "court-positions-widget": { markerStyle: "name", markerShowPhoto: false },
+            "field-positions-widget": { markerStyle: "name", markerShowPhoto: false },
+          },
+          rotationNotice: "Canvas reiniciado — posiciones de plantilla",
+        });
+        window.setTimeout(() => get().setRotationNotice(null), 2800);
+      },
+      savePositionsNow: (opts) => {
+        const s = get();
+        set({ rotationNotice: "Posiciones guardadas" });
+        s._layoutPublisher?.();
+        if (opts?.exportTheme) {
+          const theme = buildThemeExport(s.exportState(), `layout-${Date.now()}`, {
+            textOverrides: s.textOverrides,
+            zIndex: s.zIndex,
+            playerSlots: s.playerSlots,
+          });
+          downloadThemeJson(theme);
+        }
+        window.setTimeout(() => get().setRotationNotice(null), 2500);
+      },
       exportState: () => {
         const s = get();
         const game = s.sport === "nba" ? s.nbaGame : s.mlbGame;
