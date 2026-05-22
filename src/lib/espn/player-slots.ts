@@ -38,6 +38,7 @@ export function mergeNbaPlayersToSlots(
   const assign = (slotId: string, player: NbaPlayer | undefined, team: "home" | "away", idx: number) => {
     if (!player) return;
     const prev = nextBindings[slotId];
+    if (prev?.dataSource === "manual") return;
     if (prev?.athleteId !== player.id) changed = true;
     nextBindings[slotId] = {
       slotId,
@@ -68,6 +69,15 @@ export function getPlayerForSlot(
   bindings: Record<string, PlayerSlotBinding>
 ): NbaPlayer | undefined {
   const b = bindings[slotId];
+  if (b?.dataSource === "manual") {
+    return {
+      id: b.athleteId ?? slotId,
+      name: b.manualName ?? "—",
+      headshot: b.manualImageUrl,
+      position: b.position,
+      jersey: undefined,
+    };
+  }
   if (!b?.athleteId) {
     const homeIdx = NBA_HOME_SLOTS.indexOf(slotId as (typeof NBA_HOME_SLOTS)[number]);
     const awayIdx = NBA_AWAY_SLOTS.indexOf(slotId as (typeof NBA_AWAY_SLOTS)[number]);

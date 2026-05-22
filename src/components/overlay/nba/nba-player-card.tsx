@@ -8,9 +8,13 @@ import { useEditorStore } from "@/lib/store/editor-store";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
-export const NbaPlayerCard = memo(function NbaPlayerCard({ widgetFilter }: Props) {
+export const NbaPlayerCard = memo(function NbaPlayerCard({
+  widgetFilter,
+  interactive = false,
+}: Props) {
   const game = useEditorStore((s) => s.nbaGame);
   const player = game.featuredPlayer;
   if (!shouldShowWidget(widgetFilter, "card-jugador")) return null;
@@ -19,7 +23,9 @@ export const NbaPlayerCard = memo(function NbaPlayerCard({ widgetFilter }: Props
   return (
     <MovableLayer
       id="card-jugador"
-      className="flex gap-4 rounded-xl border border-white/15 bg-gradient-to-r from-black/90 to-black/70 px-5 py-4 backdrop-blur-md"
+      className="flex gap-4 rounded-xl border border-white/15 bg-gradient-to-r from-black/90 to-black/70 px-5 py-4 backdrop-blur-md inline-block"
+      editable
+      interactive={interactive}
     >
       {player.headshot && (
         <Image

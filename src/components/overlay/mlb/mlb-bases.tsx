@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
 function BaseDiamond({ first, second, third }: { first: boolean; second: boolean; third: boolean }) {
@@ -28,7 +29,7 @@ function BaseDiamond({ first, second, third }: { first: boolean; second: boolean
   );
 }
 
-export function MlbBases({ widgetFilter }: Props) {
+export function MlbBases({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore((s) => s.mlbGame);
   if (!shouldShowWidget(widgetFilter, "bases-widget")) return null;
 
@@ -37,7 +38,9 @@ export function MlbBases({ widgetFilter }: Props) {
   return (
     <MovableLayer
       id="bases-widget"
-      className="flex items-center gap-4 rounded-lg border border-white/10 bg-black/80 px-4 py-3"
+      className="flex items-center gap-4 rounded-lg border border-white/10 bg-black/80 px-4 py-3 inline-block"
+      editable
+      interactive={interactive}
     >
       <BaseDiamond first={b.first} second={b.second} third={b.third} />
       <div className="flex gap-3 text-sm" style={{ fontFamily: '"Bebas Neue", sans-serif' }}>

@@ -31,12 +31,17 @@ export function LayerTransformHandles({ id, width, height }: Props) {
       const startX = e.clientX;
       const startY = e.clientY;
       const ratio = height / width || 1;
+      const fromCenter = e.ctrlKey;
       let w = width;
       let h = height;
 
       const onMove = (ev: PointerEvent) => {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
+        let dx = ev.clientX - startX;
+        let dy = ev.clientY - startY;
+        if (fromCenter) {
+          dx *= 2;
+          dy *= 2;
+        }
         if (handle.includes("e")) w = Math.max(24, width + dx);
         if (handle.includes("w")) w = Math.max(24, width - dx);
         if (handle.includes("s")) h = Math.max(24, height + dy);

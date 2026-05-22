@@ -13,6 +13,10 @@ export interface ThemeExport {
   textOverrides?: Record<string, string>;
   zIndex?: Record<string, number>;
   playerSlots?: StreamSportsState["playerSlots"];
+  freeEditMode?: boolean;
+  moveAsBlock?: boolean;
+  dataBindings?: StreamSportsState["dataBindings"];
+  userTouchedElements?: string[];
 }
 
 export function buildThemeExport(
@@ -37,6 +41,10 @@ export function buildThemeExport(
     textOverrides: extras?.textOverrides,
     zIndex: extras?.zIndex,
     playerSlots: extras?.playerSlots ?? state.playerSlots,
+    freeEditMode: state.freeEditMode,
+    moveAsBlock: state.moveAsBlock,
+    dataBindings: state.dataBindings,
+    userTouchedElements: state.userTouchedElements,
   };
 }
 

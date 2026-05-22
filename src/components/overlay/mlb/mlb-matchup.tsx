@@ -7,9 +7,10 @@ import { useEditorStore } from "@/lib/store/editor-store";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
-export function MlbMatchup({ widgetFilter }: Props) {
+export function MlbMatchup({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore((s) => s.mlbGame);
   if (!shouldShowWidget(widgetFilter, "matchup-widget")) return null;
   const { pitcher, batter } = game;
@@ -18,7 +19,9 @@ export function MlbMatchup({ widgetFilter }: Props) {
   return (
     <MovableLayer
       id="matchup-widget"
-      className="flex items-center gap-6 rounded-xl border border-white/10 bg-black/85 px-5 py-4 backdrop-blur-md"
+      className="flex items-center gap-6 rounded-xl border border-white/10 bg-black/85 px-5 py-4 backdrop-blur-md inline-block"
+      editable
+      interactive={interactive}
     >
       {pitcher && (
         <div className="flex items-center gap-3">

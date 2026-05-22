@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   EditorMode,
+  ElementDataBinding,
   ElementStyle,
   MlbGameSnapshot,
   NbaGameSnapshot,
@@ -69,6 +70,8 @@ interface EditorStore {
   room: string;
   eventId: string | null;
   designMode: boolean;
+  freeEditMode: boolean;
+  moveAsBlock: boolean;
   groupMode: boolean;
   editorMode: EditorMode;
   selectedId: string | null;
@@ -79,6 +82,8 @@ interface EditorStore {
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;
   textOverrides: Record<string, string>;
+  dataBindings: Record<string, ElementDataBinding>;
+  userTouchedElements: string[];
   zIndex: Record<string, number>;
   dirtyIds: string[];
   nbaGame: NbaGameSnapshot;
@@ -96,8 +101,12 @@ interface EditorStore {
   setRoom: (r: string) => void;
   setEventId: (id: string | null) => void;
   setDesignMode: (v: boolean) => void;
+  setFreeEditMode: (v: boolean) => void;
+  setMoveAsBlock: (v: boolean) => void;
   setEditorMode: (m: EditorMode) => void;
   setGroupMode: (v: boolean) => void;
+  setDataBinding: (id: string, binding: ElementDataBinding) => void;
+  markUserTouched: (id: string) => void;
   setSelectedId: (id: string | null) => void;
   setSelectedIds: (ids: string[]) => void;
   toggleSidebar: () => void;
@@ -121,6 +130,7 @@ interface EditorStore {
   sendBackward: (id: string) => void;
   resetTransform: (id: string) => void;
   duplicateElement: (id: string) => void;
+  duplicateElementAsCopy: (id: string) => string | null;
   groupSelection: () => void;
   ungroupSelection: () => void;
   showAllWidgets: () => void;
@@ -137,8 +147,10 @@ export const useEditorStore = create<EditorStore>()(
       room: "",
       eventId: null,
       designMode: false,
-      groupMode: true,
-      editorMode: "simple",
+      freeEditMode: true,
+      moveAsBlock: false,
+      groupMode: false,
+      editorMode: "advanced",
       selectedId: null,
       selectedIds: [],
       sidebarCollapsed: false,
@@ -147,6 +159,8 @@ export const useEditorStore = create<EditorStore>()(
       positions: defaultPositions("nba"),
       elements: {},
       textOverrides: {},
+      dataBindings: {},
+      userTouchedElements: [],
       zIndex: {},
       dirtyIds: [],
       nbaGame: NBA_MOCK_GAME,
@@ -177,8 +191,22 @@ export const useEditorStore = create<EditorStore>()(
           nbaGame: designMode ? NBA_MOCK_GAME : s.nbaGame,
           mlbGame: designMode ? MLB_MOCK_GAME : s.mlbGame,
         })),
-      setEditorMode: (editorMode) => set({ editorMode }),
-      setGroupMode: (groupMode) => set({ groupMode }),
+      setEditorMode: (editorMode) =>
+        set({ editorMode, freeEditMode: editorMode === "advanced" }),
+      setFreeEditMode: (freeEditMode) =>
+        set({ freeEditMode, editorMode: freeEditMode ? "advanced" : "simple" }),
+      setMoveAsBlock: (moveAsBlock) => set({ moveAsBlock, groupMode: moveAsBlock }),
+      setGroupMode: (groupMode) => set({ groupMode, moveAsBlock: groupMode }),
+      setDataBinding: (id, binding) =>
+        set((s) => ({
+          dataBindings: { ...s.dataBindings, [id]: { ...s.dataBindings[id], ...binding } },
+        })),
+      markUserTouched: (id) =>
+        set((s) => ({
+          userTouchedElements: s.userTouchedElements.includes(id)
+            ? s.userTouchedElements
+            : [...s.userTouchedElements, id],
+        })),
       setSelectedId: (selectedId) =>
         set({ selectedId, selectedIds: selectedId ? [selectedId] : [] }),
       setSelectedIds: (selectedIds) =>
@@ -192,6 +220,9 @@ export const useEditorStore = create<EditorStore>()(
         set((s) => ({
           positions: { ...s.positions, [id]: pos },
           dirtyIds: s.dirtyIds.includes(id) ? s.dirtyIds : [...s.dirtyIds, id],
+          userTouchedElements: s.userTouchedElements.includes(id)
+            ? s.userTouchedElements
+            : [...s.userTouchedElements, id],
         }));
       },
       nudgePosition: (id, dx, dy) => {
@@ -205,6 +236,9 @@ export const useEditorStore = create<EditorStore>()(
         set((s) => ({
           elements: { ...s.elements, [id]: { ...s.elements[id], ...style } },
           dirtyIds: s.dirtyIds.includes(id) ? s.dirtyIds : [...s.dirtyIds, id],
+          userTouchedElements: s.userTouchedElements.includes(id)
+            ? s.userTouchedElements
+            : [...s.userTouchedElements, id],
         })),
       setTextOverride: (id, text) =>
         set((s) => ({
@@ -235,21 +269,26 @@ export const useEditorStore = create<EditorStore>()(
       setPlayerSlots: (playerSlots) => set({ playerSlots }),
       setRotationNotice: (rotationNotice) => set({ rotationNotice }),
       setInlineEditId: (inlineEditId) => set({ inlineEditId }),
-      applyStreamTemplate: (t) =>
-        set((s) => ({
+      applyStreamTemplate: (t) => {
+        const s = get();
+        const touched = new Set(s.userTouchedElements);
+        const elements = { ...s.elements };
+        for (const [id, st] of Object.entries(t.elements)) {
+          if (!touched.has(id)) elements[id] = { ...elements[id], ...st };
+        }
+        const positions = { ...s.positions };
+        for (const [id, p] of Object.entries(t.positions)) {
+          if (!touched.has(id)) positions[id] = p;
+        }
+        set({
           templateId: t.id,
           templateName: t.name,
-          positions: { ...s.positions, ...t.positions },
-          elements: { ...s.elements, ...t.elements },
+          positions,
           visibility: { ...s.visibility, ...t.visibility },
-          dirtyIds: [
-            ...new Set([
-              ...s.dirtyIds,
-              ...Object.keys(t.positions),
-              ...Object.keys(t.elements),
-            ]),
-          ],
-        })),
+          elements,
+          dirtyIds: [...new Set([...s.dirtyIds, ...Object.keys(t.positions)])],
+        });
+      },
       setLocked: (id, locked) =>
         set((s) => ({
           lockedIds: { ...s.lockedIds, [id]: locked },
@@ -270,13 +309,31 @@ export const useEditorStore = create<EditorStore>()(
           },
         })),
       duplicateElement: (id) => {
+        get().duplicateElementAsCopy(id);
+      },
+      duplicateElementAsCopy: (id) => {
         const s = get();
+        const newId = `${id}-copy-${Date.now().toString(36).slice(-4)}`;
         const cur = s.positions[id];
-        if (!cur) return;
-        get().setPosition(id, {
-          left: `${(parseFloat(cur.left) || 0) + 24}px`,
-          top: `${(parseFloat(cur.top) || 0) + 24}px`,
+        if (!cur) return null;
+        set({
+          positions: {
+            ...s.positions,
+            [newId]: {
+              left: `${(parseFloat(cur.left) || 0) + 32}px`,
+              top: `${(parseFloat(cur.top) || 0) + 32}px`,
+            },
+          },
+          elements: { ...s.elements, [newId]: { ...s.elements[id] } },
+          visibility: { ...s.visibility, [newId]: s.visibility[id] !== false },
+          textOverrides: { ...s.textOverrides, [newId]: s.textOverrides[id] },
+          dataBindings: { ...s.dataBindings, [newId]: { ...s.dataBindings[id] } },
+          zIndex: { ...s.zIndex, [newId]: (s.zIndex[id] ?? 10) + 1 },
+          selectedId: newId,
+          selectedIds: [newId],
+          dirtyIds: [...s.dirtyIds, newId],
         });
+        return newId;
       },
       groupSelection: () => {
         const ids = get().selectedIds;
@@ -306,8 +363,12 @@ export const useEditorStore = create<EditorStore>()(
       importState: (state) =>
         set((s) => ({
           designMode: state.designMode ?? s.designMode,
+          freeEditMode: state.freeEditMode ?? s.freeEditMode,
+          moveAsBlock: state.moveAsBlock ?? s.moveAsBlock,
           groupMode: state.groupMode ?? s.groupMode,
           editorMode: state.editorMode ?? s.editorMode,
+          dataBindings: { ...s.dataBindings, ...state.dataBindings },
+          userTouchedElements: state.userTouchedElements ?? s.userTouchedElements,
           visibility: { ...s.visibility, ...state.visibility },
           positions: { ...s.positions, ...state.positions },
           elements: { ...s.elements, ...state.elements },
@@ -350,8 +411,12 @@ export const useEditorStore = create<EditorStore>()(
           room: s.room,
           eventId: s.eventId ?? undefined,
           designMode: s.designMode,
+          freeEditMode: s.freeEditMode,
+          moveAsBlock: s.moveAsBlock,
           groupMode: s.groupMode,
           editorMode: s.editorMode,
+          dataBindings: { ...s.dataBindings },
+          userTouchedElements: [...s.userTouchedElements],
           templateId: s.templateId,
           templateName: s.templateName,
           visibility: s.visibility,
@@ -369,7 +434,11 @@ export const useEditorStore = create<EditorStore>()(
       name: "stream-sports-editor",
       partialize: (s) => ({
         editorMode: s.editorMode,
+        freeEditMode: s.freeEditMode,
+        moveAsBlock: s.moveAsBlock,
         groupMode: s.groupMode,
+        dataBindings: s.dataBindings,
+        userTouchedElements: s.userTouchedElements,
         positions: s.positions,
         elements: s.elements,
         visibility: s.visibility,

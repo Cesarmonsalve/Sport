@@ -9,6 +9,7 @@ import type { NbaPlayer } from "@/types";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
 function RosterRow({ p, pos, accent }: { p: NbaPlayer; pos: string; accent: string }) {
@@ -38,7 +39,7 @@ function RosterRow({ p, pos, accent }: { p: NbaPlayer; pos: string; accent: stri
   );
 }
 
-export const NbaQuintet = memo(function NbaQuintet({ widgetFilter }: Props) {
+export const NbaQuintet = memo(function NbaQuintet({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore(selectNbaGame);
   if (!shouldShowWidget(widgetFilter, "quinteto-widget")) return null;
 
@@ -51,7 +52,9 @@ export const NbaQuintet = memo(function NbaQuintet({ widgetFilter }: Props) {
   return (
     <MovableLayer
       id="quinteto-widget"
-      className="ss-roster-panel rounded-lg border border-[#1a5cff]/40 bg-black/85 backdrop-blur-md overflow-hidden"
+      className="ss-roster-panel rounded-lg border border-[#1a5cff]/40 bg-black/85 backdrop-blur-md overflow-hidden inline-block"
+      editable
+      interactive={interactive}
     >
       <div className="px-3 py-2 border-b border-white/10 bg-[#1a5cff]/20">
         <p className="text-[10px] uppercase tracking-widest font-semibold text-[#1a5cff]">

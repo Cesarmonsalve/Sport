@@ -7,9 +7,10 @@ import { useEditorStore } from "@/lib/store/editor-store";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
-export function MlbTicker({ widgetFilter }: Props) {
+export function MlbTicker({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore((s) => s.mlbGame);
   const plays = game.lastPlays ?? [];
   if (!shouldShowWidget(widgetFilter, "play-ticker")) return null;
@@ -20,7 +21,9 @@ export function MlbTicker({ widgetFilter }: Props) {
   return (
     <MovableLayer
       id="play-ticker"
-      className="w-[900px] overflow-hidden rounded-md border border-white/10 bg-black/90"
+      className="min-w-[400px] overflow-hidden rounded-md border border-white/10 bg-black/90 inline-block"
+      editable
+      interactive={interactive}
     >
       <motion.div
         className="whitespace-nowrap px-4 py-2 text-sm text-white/90"

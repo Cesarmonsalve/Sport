@@ -65,25 +65,25 @@ export const OverlayCanvas = memo(function OverlayCanvas({
       )}
       {sport === "nba" && (
         <>
-          <NbaCourtPositions widgetFilter={widget} />
-          <NbaScorebug widgetFilter={widget} />
-          <NbaQuintet widgetFilter={widget} />
-          <NbaPlayerCard widgetFilter={widget} />
-          <NbaHighlight widgetFilter={widget} />
-          <NbaWebcamPanel widgetFilter={widget} />
-          <NbaSocialFooter widgetFilter={widget} />
+          <NbaCourtPositions widgetFilter={widget} interactive={interactive} />
+          <NbaScorebug widgetFilter={widget} interactive={interactive} />
+          <NbaQuintet widgetFilter={widget} interactive={interactive} />
+          <NbaPlayerCard widgetFilter={widget} interactive={interactive} />
+          <NbaHighlight widgetFilter={widget} interactive={interactive} />
+          <NbaWebcamPanel widgetFilter={widget} interactive={interactive} />
+          <NbaSocialFooter widgetFilter={widget} interactive={interactive} />
         </>
       )}
       {sport === "mlb" && (
         <>
-          <MlbFieldPositions widgetFilter={widget} />
-          <MlbScoreboard widgetFilter={widget} />
-          <MlbLineScore widgetFilter={widget} />
-          <MlbBases widgetFilter={widget} />
-          <MlbMatchup widgetFilter={widget} />
-          <MlbRoster widgetFilter={widget} />
-          <MlbTicker widgetFilter={widget} />
-          <MlbWebcamFrames widgetFilter={widget} />
+          <MlbFieldPositions widgetFilter={widget} interactive={interactive} />
+          <MlbScoreboard widgetFilter={widget} interactive={interactive} />
+          <MlbLineScore widgetFilter={widget} interactive={interactive} />
+          <MlbBases widgetFilter={widget} interactive={interactive} />
+          <MlbMatchup widgetFilter={widget} interactive={interactive} />
+          <MlbRoster widgetFilter={widget} interactive={interactive} />
+          <MlbTicker widgetFilter={widget} interactive={interactive} />
+          <MlbWebcamFrames widgetFilter={widget} interactive={interactive} />
         </>
       )}
     </div>

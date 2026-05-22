@@ -8,16 +8,17 @@ import { useEditorStore } from "@/lib/store/editor-store";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
-export function NbaHighlight({ widgetFilter }: Props) {
+export function NbaHighlight({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore((s) => s.nbaGame);
   const player = game.featuredPlayer;
   if (!shouldShowWidget(widgetFilter, "destacado-widget")) return null;
   if (!player) return null;
 
   return (
-    <MovableLayer id="destacado-widget">
+    <MovableLayer id="destacado-widget" editable interactive={interactive}>
       <motion.div
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}

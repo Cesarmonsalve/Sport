@@ -69,7 +69,8 @@ export function EditorContextMenu() {
       )}
       {item("Reset transform", () => store.resetTransform(menu.id))}
       {entry?.parent && item("Seleccionar padre", () => store.setSelectedId(entry.parent!))}
-      {item("Duplicar posición", () => store.duplicateElement(menu.id))}
+      {item("Duplicar como copia", () => store.duplicateElementAsCopy(menu.id))}
+      {item("Desvincular del grupo", () => store.setMoveAsBlock(false))}
       {item("Ocultar", () => store.setVisibility(menu.id, false))}
     </div>
   );

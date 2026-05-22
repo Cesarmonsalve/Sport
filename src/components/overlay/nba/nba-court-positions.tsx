@@ -10,19 +10,24 @@ const AWAY = ["PG", "SG", "SF", "PF", "C"] as const;
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
-export const NbaCourtPositions = memo(function NbaCourtPositions({ widgetFilter }: Props) {
+export const NbaCourtPositions = memo(function NbaCourtPositions({
+  widgetFilter,
+  interactive = false,
+}: Props) {
   if (!shouldShowWidget(widgetFilter, "court-positions-widget")) return null;
 
   return (
-    <MovableLayer id="court-positions-widget" className="ss-court-root">
+    <MovableLayer id="court-positions-widget" className="ss-court-root" editable interactive={interactive}>
       {HOME.map((pos) => (
         <NbaCourtSlot
           key={`h-${pos}`}
           slotId={`court-home-${pos.toLowerCase()}`}
           label={pos}
           team="home"
+          interactive={interactive}
         />
       ))}
       {AWAY.map((pos) => (
@@ -31,6 +36,7 @@ export const NbaCourtPositions = memo(function NbaCourtPositions({ widgetFilter 
           slotId={`court-away-${pos.toLowerCase()}`}
           label={pos}
           team="away"
+          interactive={interactive}
         />
       ))}
     </MovableLayer>

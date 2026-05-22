@@ -8,6 +8,7 @@ import type { MlbPlayer } from "@/types";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
 function RosterCol({ title, players }: { title: string; players: MlbPlayer[] }) {
@@ -35,7 +36,7 @@ function RosterCol({ title, players }: { title: string; players: MlbPlayer[] }) 
   );
 }
 
-export function MlbRoster({ widgetFilter }: Props) {
+export function MlbRoster({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore((s) => s.mlbGame);
   if (!shouldShowWidget(widgetFilter, "roster-widget")) return null;
 
@@ -46,7 +47,9 @@ export function MlbRoster({ widgetFilter }: Props) {
   return (
     <MovableLayer
       id="roster-widget"
-      className="flex gap-4 rounded-lg border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm"
+      className="flex gap-4 rounded-lg border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm inline-block"
+      editable
+      interactive={interactive}
     >
       <RosterCol title={game.awayAbbr} players={away} />
       <div className="w-px bg-white/10" />

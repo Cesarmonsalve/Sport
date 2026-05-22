@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Copy, RefreshCw, Palette, ExternalLink } from "lucide-react";
+import { Copy, RefreshCw, Palette, ExternalLink, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -17,25 +17,25 @@ interface EditorHeaderProps {
 
 const NBA_WIDGETS = [
   { id: "nba-scorebug", label: "Scorebug" },
-  { id: "card-jugador", label: "Tarjeta" },
   { id: "quinteto-widget", label: "Quinteto" },
-  { id: "destacado-widget", label: "Destacado" },
+  { id: "court-positions-widget", label: "Cancha" },
+  { id: "webcam-panel", label: "Webcam" },
 ];
 
 const MLB_WIDGETS = [
   { id: "scoreboard", label: "Marcador" },
-  { id: "line-score", label: "Line score" },
-  { id: "bases-widget", label: "Bases" },
+  { id: "field-positions-widget", label: "Campo" },
   { id: "matchup-widget", label: "Matchup" },
-  { id: "roster-widget", label: "Roster" },
-  { id: "play-ticker", label: "Ticker" },
+  { id: "webcam-main", label: "Webcam" },
 ];
 
 export function EditorHeader({ sport, room }: EditorHeaderProps) {
   const designMode = useEditorStore((s) => s.designMode);
   const setDesignMode = useEditorStore((s) => s.setDesignMode);
-  const editorMode = useEditorStore((s) => s.editorMode);
-  const setEditorMode = useEditorStore((s) => s.setEditorMode);
+  const freeEditMode = useEditorStore((s) => s.freeEditMode);
+  const setFreeEditMode = useEditorStore((s) => s.setFreeEditMode);
+  const moveAsBlock = useEditorStore((s) => s.moveAsBlock);
+  const setMoveAsBlock = useEditorStore((s) => s.setMoveAsBlock);
   const syncStatus = useEditorStore((s) => s.syncStatus);
 
   const overlayBase = appendRoomToPath(`/overlay/${sport}`, room);
@@ -49,80 +49,57 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
     void navigator.clipboard.writeText(url);
   };
 
-  const statusVariant =
-    syncStatus.includes("connected")
-      ? "success"
-      : syncStatus.includes("local")
-        ? "warning"
-        : "secondary";
+  const statusVariant = syncStatus.includes("connected")
+    ? "success"
+    : syncStatus.includes("local")
+      ? "warning"
+      : "secondary";
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
-      <Link href="/" className="text-sm font-semibold tracking-tight shrink-0">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3 flex-wrap">
+      <Link href="/" className="text-sm font-semibold shrink-0">
         Stream Sports
       </Link>
-      <Badge variant="secondary" className="uppercase shrink-0">
+      <Badge variant="secondary" className="uppercase text-[10px]">
         {sport}
       </Badge>
-      <Badge variant={statusVariant as "success"} className="font-mono text-[10px] shrink-0">
+      <Badge variant={statusVariant as "success"} className="font-mono text-[10px]">
         {room}
       </Badge>
-      <Badge variant="secondary" className="text-[10px] shrink-0 max-w-[120px] truncate">
-        {syncStatus}
-      </Badge>
 
-      <div className="ml-auto flex items-center gap-4">
-        <div className="hidden lg:flex items-center gap-1">
-          {widgets.map((w) => (
-            <Button
-              key={w.id}
-              variant="ghost"
-              size="sm"
-              className="h-7 text-[10px] px-2"
-              onClick={() =>
-                copyUrl(
-                  appendRoomToPath(`/overlay/${sport}/${w.id}`, room)
-                )
-              }
-              title={`Ruta dedicada: /overlay/${sport}/${w.id}`}
-            >
-              {w.label}
-            </Button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <Switch
-            id="design-mode"
-            checked={designMode}
-            onCheckedChange={setDesignMode}
-          />
-          <Label htmlFor="design-mode" className="flex items-center gap-1 text-xs">
-            <Palette className="h-3 w-3" />
-            Diseño
+      <div className="ml-auto flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2 py-1">
+          <Unlock className="h-3 w-3 text-primary" />
+          <Switch id="free-edit" checked={freeEditMode} onCheckedChange={setFreeEditMode} />
+          <Label htmlFor="free-edit" className="text-xs font-medium">
+            Edición libre
           </Label>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Switch
-            id="adv-mode"
-            checked={editorMode === "advanced"}
-            onCheckedChange={(v) => setEditorMode(v ? "advanced" : "simple")}
+            id="move-block"
+            checked={moveAsBlock}
+            onCheckedChange={setMoveAsBlock}
+            disabled={freeEditMode}
           />
-          <Label htmlFor="adv-mode" className="text-xs">
-            Avanzado
+          <Label htmlFor="move-block" className="text-xs text-muted-foreground">
+            Mover como bloque
+          </Label>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Switch id="design-mode" checked={designMode} onCheckedChange={setDesignMode} />
+          <Label htmlFor="design-mode" className="flex items-center gap-1 text-xs">
+            <Palette className="h-3 w-3" />
+            Mock
           </Label>
         </div>
         <Button variant="outline" size="sm" onClick={() => copyUrl(overlayBase)}>
           <Copy className="h-3.5 w-3.5" />
-          OBS full
+          OBS
         </Button>
         <Button variant="ghost" size="icon" asChild>
           <Link href={overlayBase} target="_blank">
             <ExternalLink className="h-4 w-4" />
-          </Link>
-        </Button>
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={`${overlayBase}&design=1`} target="_blank">
-            <RefreshCw className="h-4 w-4" />
           </Link>
         </Button>
       </div>

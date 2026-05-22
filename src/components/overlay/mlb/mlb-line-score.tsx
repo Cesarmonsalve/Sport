@@ -6,9 +6,10 @@ import { useEditorStore } from "@/lib/store/editor-store";
 
 interface Props {
   widgetFilter?: string | null;
+  interactive?: boolean;
 }
 
-export function MlbLineScore({ widgetFilter }: Props) {
+export function MlbLineScore({ widgetFilter, interactive = false }: Props) {
   const game = useEditorStore((s) => s.mlbGame);
   const ls = game.linescore;
   if (!shouldShowWidget(widgetFilter, "line-score")) return null;
@@ -19,7 +20,9 @@ export function MlbLineScore({ widgetFilter }: Props) {
   return (
     <MovableLayer
       id="line-score"
-      className="rounded-lg border border-white/10 bg-black/85 px-3 py-2 backdrop-blur-sm"
+      className="rounded-lg border border-white/10 bg-black/85 px-3 py-2 backdrop-blur-sm inline-block"
+      editable
+      interactive={interactive}
     >
       <table className="text-center text-xs" style={{ fontFamily: '"Bebas Neue", sans-serif' }}>
         <thead>

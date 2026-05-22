@@ -4,32 +4,56 @@ export type EditorMode = "simple" | "advanced";
 
 export type WidgetAnimation = "none" | "fade" | "slide";
 
+export type DataSource = "espn" | "manual";
+
 export type ElementStyle = Partial<{
   left: string;
   top: string;
-  fontSize: string;
-  fontFamily: string;
-  color: string;
-  opacity: string;
   width: string;
   height: string;
+  minWidth: string;
+  minHeight: string;
+  fontSize: string;
+  fontFamily: string;
+  fontWeight: string;
+  letterSpacing: string;
+  lineHeight: string;
+  textAlign: string;
+  color: string;
+  opacity: string;
   backgroundColor: string;
   textShadow: string;
+  boxShadow: string;
   borderRadius: string;
   borderColor: string;
+  borderWidth: string;
+  padding: string;
+  margin: string;
+  gap: string;
   animation: WidgetAnimation;
   zIndex: string;
   rotate: string;
   imageUrl: string;
+  objectFit: string;
+  accentColor: string;
 }>;
 
-/** Maps ESPN athlete to a fixed UI slot without moving layout */
+export interface ElementDataBinding {
+  dataSource: DataSource;
+  manualText?: string;
+  manualImageUrl?: string;
+  espnField?: string;
+}
+
 export interface PlayerSlotBinding {
   slotId: string;
   athleteId?: string;
   team: "home" | "away";
   slotIndex: number;
   position?: string;
+  dataSource?: DataSource;
+  manualName?: string;
+  manualImageUrl?: string;
 }
 
 export interface StreamSportsState {
@@ -38,6 +62,8 @@ export interface StreamSportsState {
   room: string;
   eventId?: string;
   designMode: boolean;
+  freeEditMode: boolean;
+  moveAsBlock: boolean;
   groupMode: boolean;
   editorMode: EditorMode;
   templateId?: string;
@@ -46,8 +72,10 @@ export interface StreamSportsState {
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;
   textOverrides?: Record<string, string>;
+  dataBindings?: Record<string, ElementDataBinding>;
   zIndex?: Record<string, number>;
   playerSlots?: Record<string, PlayerSlotBinding>;
+  userTouchedElements?: string[];
   game?: NbaGameSnapshot | MlbGameSnapshot;
   ts?: number;
 }
@@ -80,6 +108,8 @@ export interface NbaGameSnapshot {
   awayAbbr: string;
   homeLogo?: string;
   awayLogo?: string;
+  homeLogoOverride?: string;
+  awayLogoOverride?: string;
   foulsHome?: number;
   foulsAway?: number;
   bonusHome?: boolean;
@@ -119,6 +149,8 @@ export interface MlbGameSnapshot {
   awayAbbr: string;
   homeLogo?: string;
   awayLogo?: string;
+  homeLogoOverride?: string;
+  awayLogoOverride?: string;
   linescore?: MlbLineScore;
   balls?: number;
   strikes?: number;
@@ -138,6 +170,7 @@ export interface RegistryEntry {
   parent?: string;
   children?: string[];
   compound?: boolean;
+  atom?: boolean;
   defaults?: ElementStyle;
 }
 

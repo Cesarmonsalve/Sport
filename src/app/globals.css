@@ -84,6 +84,18 @@ body {
   outline-offset: 2px;
 }
 
+.ss-bounding-box::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+  pointer-events: none;
+}
+
+.ss-movable {
+  box-sizing: border-box;
+}
+
 .ss-hidden-widget {
   opacity: 0 !important;
   pointer-events: none !important;

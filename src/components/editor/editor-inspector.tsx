@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { NBA_REGISTRY, NBA_PRESETS } from "@/lib/registry/nba";
 import { MLB_REGISTRY, MLB_PRESETS } from "@/lib/registry/mlb";
+import {
+  InspectorColorsTab,
+  InspectorDataTab,
+  InspectorImageTab,
+  InspectorLayoutTab,
+  InspectorTypographyTab,
+} from "@/components/editor/inspector-fields";
 import type { Sport, WidgetAnimation } from "@/types";
 
 interface EditorInspectorProps {
@@ -24,30 +31,46 @@ const ANIM_OPTIONS: { value: WidgetAnimation; label: string }[] = [
 export function EditorInspector({ sport }: EditorInspectorProps) {
   const selectedId = useEditorStore((s) => s.selectedId);
   const elements = useEditorStore((s) => s.elements);
+  const positions = useEditorStore((s) => s.positions);
   const visibility = useEditorStore((s) => s.visibility);
-  const nbaGame = useEditorStore((s) => s.nbaGame);
-  const mlbGame = useEditorStore((s) => s.mlbGame);
+  const dataBindings = useEditorStore((s) => s.dataBindings);
+  const lockedIds = useEditorStore((s) => s.lockedIds);
   const setElementStyle = useEditorStore((s) => s.setElementStyle);
+  const setPosition = useEditorStore((s) => s.setPosition);
   const setVisibility = useEditorStore((s) => s.setVisibility);
   const setTextOverride = useEditorStore((s) => s.setTextOverride);
   const setZIndex = useEditorStore((s) => s.setZIndex);
-  const duplicatePosition = useEditorStore((s) => s.duplicatePosition);
-  const textOverrides = useEditorStore((s) => s.textOverrides);
+  const setLocked = useEditorStore((s) => s.setLocked);
+  const setDataBinding = useEditorStore((s) => s.setDataBinding);
+  const resetTransform = useEditorStore((s) => s.resetTransform);
+  const duplicateElementAsCopy = useEditorStore((s) => s.duplicateElementAsCopy);
   const applyPreset = useEditorStore((s) => s.applyPreset);
-  const editorMode = useEditorStore((s) => s.editorMode);
-  const designMode = useEditorStore((s) => s.designMode);
+  const textOverrides = useEditorStore((s) => s.textOverrides);
 
   const registry = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
   const presets = sport === "nba" ? NBA_PRESETS : MLB_PRESETS;
   const entry = selectedId ? registry[selectedId] : null;
   const style = selectedId ? elements[selectedId] ?? {} : {};
+  const pos = selectedId ? positions[selectedId] : undefined;
+
+  const patchStyle = (p: typeof style) => {
+    if (!selectedId) return;
+    setElementStyle(selectedId, p);
+  };
+  const patchPos = (p: { left?: string; top?: string }) => {
+    if (!selectedId) return;
+    setPosition(selectedId, {
+      left: p.left ?? pos?.left ?? "0",
+      top: p.top ?? pos?.top ?? "0",
+    });
+  };
 
   return (
-    <aside className="flex h-full w-[300px] shrink-0 flex-col border-l border-border bg-card">
+    <aside className="flex h-full w-[320px] shrink-0 flex-col border-l border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold">Inspector</h2>
-        <p className="text-xs text-muted-foreground">
-          {entry ? entry.label : "Selecciona un elemento"}
+        <p className="text-xs text-muted-foreground font-mono truncate">
+          {entry ? entry.label : "Selecciona cualquier capa"}
         </p>
       </div>
 
@@ -58,246 +81,136 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 8 }}
-            transition={{ duration: 0.15 }}
-            className="flex-1 overflow-y-auto p-4"
+            className="flex-1 overflow-y-auto p-3"
           >
-            <Tabs defaultValue="design">
-              <TabsList className="w-full grid grid-cols-4">
-                <TabsTrigger value="design">Diseño</TabsTrigger>
-                <TabsTrigger value="data">Datos</TabsTrigger>
-                <TabsTrigger value="anim">Anim.</TabsTrigger>
-                <TabsTrigger value="vis">Vis.</TabsTrigger>
+            <Tabs defaultValue="layout">
+              <TabsList className="w-full grid grid-cols-3 h-8">
+                <TabsTrigger value="layout" className="text-[10px]">
+                  Layout
+                </TabsTrigger>
+                <TabsTrigger value="type" className="text-[10px]">
+                  Texto
+                </TabsTrigger>
+                <TabsTrigger value="style" className="text-[10px]">
+                  Estilo
+                </TabsTrigger>
+              </TabsList>
+              <TabsList className="w-full grid grid-cols-3 h-8 mt-1">
+                <TabsTrigger value="image" className="text-[10px]">
+                  Imagen
+                </TabsTrigger>
+                <TabsTrigger value="data" className="text-[10px]">
+                  Datos
+                </TabsTrigger>
+                <TabsTrigger value="vis" className="text-[10px]">
+                  Vis
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="design" className="space-y-3 mt-3">
-                <div className="space-y-2">
-                  <Label>Tamaño (px)</Label>
-                  <Input
-                    value={style.fontSize?.replace("px", "") ?? ""}
-                    onChange={(e) =>
-                      setElementStyle(selectedId, {
-                        fontSize: e.target.value ? `${e.target.value}px` : undefined,
-                      })
-                    }
-                    placeholder="96"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Color</Label>
-                  <Input
-                    type="color"
-                    value={style.color?.startsWith("#") ? style.color : "#00b8d4"}
-                    onChange={(e) =>
-                      setElementStyle(selectedId, { color: e.target.value })
-                    }
-                    className="h-9 p-1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Opacidad</Label>
-                  <Input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={Math.round((Number(style.opacity ?? 1) || 1) * 100)}
-                    onChange={(e) =>
-                      setElementStyle(selectedId, {
-                        opacity: String(Number(e.target.value) / 100),
-                      })
-                    }
-                  />
-                </div>
-                {editorMode === "advanced" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label>Posición left</Label>
-                      <Input
-                        value={style.left ?? ""}
-                        onChange={(e) =>
-                          setElementStyle(selectedId, { left: e.target.value })
-                        }
-                        placeholder="48px"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Ancho</Label>
-                      <Input
-                        value={style.width ?? ""}
-                        onChange={(e) =>
-                          setElementStyle(selectedId, { width: e.target.value })
-                        }
-                      />
-                    </div>
-                  </>
-                )}
-                {editorMode === "advanced" && (
-                  <div className="space-y-2">
-                    <Label>Rotación (deg)</Label>
-                    <Input
-                      value={style.rotate?.replace("deg", "") ?? ""}
-                      onChange={(e) =>
-                        setElementStyle(selectedId, {
-                          rotate: e.target.value ? `${e.target.value}deg` : undefined,
-                        })
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <Label>Z-index</Label>
+              <TabsContent value="layout" className="mt-3">
+                <InspectorLayoutTab
+                  id={selectedId}
+                  style={style}
+                  pos={pos}
+                  locked={lockedIds[selectedId]}
+                  setStyle={patchStyle}
+                  setPos={patchPos}
+                  setLocked={(v) => setLocked(selectedId, v)}
+                />
+                <div className="mt-2 space-y-1">
+                  <Label className="text-[10px]">Z-index</Label>
                   <Input
                     type="number"
+                    className="h-7 text-xs"
                     value={style.zIndex ?? ""}
                     onChange={(e) => {
                       const z = parseInt(e.target.value, 10);
                       if (!Number.isNaN(z)) setZIndex(selectedId, z);
                     }}
-                    placeholder="10"
                   />
                 </div>
-                {designMode && (
-                  <div className="space-y-2">
-                    <Label>Texto override (diseño)</Label>
-                    <Input
-                      value={textOverrides[selectedId] ?? ""}
-                      onChange={(e) => setTextOverride(selectedId, e.target.value)}
-                      placeholder="Texto personalizado en canvas"
-                    />
-                  </div>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => duplicatePosition(selectedId)}
-                >
-                  Duplicar posición (+24px)
-                </Button>
-                <div className="pt-2">
-                  <Label className="mb-2 block">Presets</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(presets).map(([key, p]) => (
-                      <Button
-                        key={key}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => applyPreset(p.map as Record<string, typeof style>)}
-                      >
-                        {p.label}
-                      </Button>
-                    ))}
-                  </div>
+              </TabsContent>
+
+              <TabsContent value="type" className="mt-3">
+                <InspectorTypographyTab style={style} setStyle={patchStyle} />
+                <div className="mt-2 space-y-1">
+                  <Label className="text-[10px]">Contenido (override)</Label>
+                  <Input
+                    className="h-7 text-xs"
+                    value={textOverrides[selectedId] ?? ""}
+                    onChange={(e) => setTextOverride(selectedId, e.target.value)}
+                  />
                 </div>
               </TabsContent>
 
-              <TabsContent value="data" className="mt-3 space-y-2 text-xs">
-                {designMode && (
-                  <p className="text-amber-400/90">Modo diseño — datos mock</p>
-                )}
-                {sport === "nba" && (
-                  <>
-                    <p>
-                      <strong>Marcador:</strong> {nbaGame.awayAbbr} {nbaGame.scoreAway} @{" "}
-                      {nbaGame.homeAbbr} {nbaGame.scoreHome}
-                    </p>
-                    <p>
-                      <strong>Reloj:</strong> {nbaGame.period} {nbaGame.clock}
-                      {nbaGame.shotClock && ` · SC ${nbaGame.shotClock}`}
-                    </p>
-                    {nbaGame.featuredPlayer && (
-                      <p>
-                        <strong>Destacado:</strong> {nbaGame.featuredPlayer.name}
-                      </p>
-                    )}
-                    <p>
-                      <strong>En cancha:</strong>{" "}
-                      {(nbaGame.onCourtHome?.length ?? 0) + (nbaGame.onCourtAway?.length ?? 0)}{" "}
-                      jugadores
-                    </p>
-                    {nbaGame.lastRotation && (
-                      <p className="text-primary">
-                        Rotación: {nbaGame.lastRotation.playerIn.name} entra
-                      </p>
-                    )}
-                  </>
-                )}
-                {sport === "mlb" && (
-                  <>
-                    <p>
-                      <strong>Marcador:</strong> {mlbGame.awayAbbr} {mlbGame.scoreAway} ·{" "}
-                      {mlbGame.homeAbbr} {mlbGame.scoreHome}
-                    </p>
-                    <p>
-                      <strong>Inning:</strong> {mlbGame.inningHalf} {mlbGame.inning}
-                    </p>
-                    <p>
-                      <strong>Conteo:</strong> {mlbGame.balls}-{mlbGame.strikes}, {mlbGame.outs} out
-                    </p>
-                    {mlbGame.batter && (
-                      <p>
-                        <strong>Bateador:</strong> {mlbGame.batter.name}
-                      </p>
-                    )}
-                    {mlbGame.pitcher && (
-                      <p>
-                        <strong>Pitcher:</strong> {mlbGame.pitcher.name}
-                      </p>
-                    )}
-                  </>
-                )}
-                <p className="text-muted-foreground pt-2">
-                  Polling ESPN: scoreboard 12–30s, summary 5–20s en vivo.
-                </p>
-              </TabsContent>
-
-              <TabsContent value="anim" className="mt-3 space-y-3">
-                <Label>Entrada del widget</Label>
-                <div className="flex flex-col gap-1">
-                  {ANIM_OPTIONS.map((opt) => (
+              <TabsContent value="style" className="mt-3">
+                <InspectorColorsTab style={style} setStyle={patchStyle} />
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {Object.entries(presets).map(([key, p]) => (
                     <Button
-                      key={opt.value}
-                      variant={style.animation === opt.value ? "default" : "outline"}
+                      key={key}
+                      variant="outline"
                       size="sm"
-                      className="justify-start"
-                      onClick={() =>
-                        setElementStyle(selectedId, { animation: opt.value })
-                      }
+                      className="h-7 text-[10px]"
+                      onClick={() => applyPreset(p.map as Record<string, typeof style>)}
                     >
-                      {opt.label}
+                      {p.label}
                     </Button>
                   ))}
                 </div>
               </TabsContent>
 
+              <TabsContent value="image" className="mt-3">
+                <InspectorImageTab style={style} setStyle={patchStyle} />
+              </TabsContent>
+
+              <TabsContent value="data" className="mt-3">
+                <InspectorDataTab
+                  binding={dataBindings[selectedId]}
+                  setBinding={(b) => setDataBinding(selectedId, b)}
+                />
+              </TabsContent>
+
               <TabsContent value="vis" className="mt-3 space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Visible en stream</Label>
+                  <Label className="text-xs">Visible</Label>
                   <Switch
                     checked={visibility[selectedId] !== false}
                     onCheckedChange={(v) => setVisibility(selectedId, v)}
                   />
                 </div>
-                {entry.children?.map((childId) => (
-                  <div key={childId} className="flex items-center justify-between pl-2">
-                    <Label className="text-xs">{registry[childId]?.label ?? childId}</Label>
-                    <Switch
-                      checked={visibility[childId] !== false}
-                      onCheckedChange={(v) => setVisibility(childId, v)}
-                    />
-                  </div>
-                ))}
+                <div className="space-y-1">
+                  <Label className="text-[10px]">Animación entrada</Label>
+                  {ANIM_OPTIONS.map((opt) => (
+                    <Button
+                      key={opt.value}
+                      variant={style.animation === opt.value ? "default" : "outline"}
+                      size="sm"
+                      className="w-full h-7 text-[10px] justify-start"
+                      onClick={() => patchStyle({ animation: opt.value })}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => resetTransform(selectedId)}>
+                  Reset transform
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => duplicateElementAsCopy(selectedId)}
+                >
+                  Duplicar como copia
+                </Button>
               </TabsContent>
             </Tabs>
           </motion.div>
         ) : (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="p-4 text-xs text-muted-foreground"
-          >
-            Haz clic en un widget del canvas o del árbol de capas para editar propiedades.
-          </motion.p>
+          <p className="p-4 text-xs text-muted-foreground">
+            Todo es editable: selecciona cualquier capa del canvas. Activa Edición libre en el header si un hijo no se mueve.
+          </p>
         )}
       </AnimatePresence>
     </aside>
