@@ -28,11 +28,14 @@ export function EditorDock({ sport }: EditorDockProps) {
         disabled={designMode || isLoading}
       >
         <option value="">— Seleccionar —</option>
-        {events.map((ev) => (
-          <option key={ev.id} value={ev.id}>
-            {ev.shortName || ev.name} · {formatGameStatus((ev as any).state || "pre", ev.status, (ev as any).date)}
-          </option>
-        ))}
+        {events.map((ev) => {
+          const e = ev as typeof ev & { state?: string; date?: string };
+          return (
+            <option key={ev.id} value={ev.id}>
+              {ev.shortName || ev.name} · {formatGameStatus(e.state || "pre", ev.status, e.date)}
+            </option>
+          );
+        })}
       </select>
       <Button variant="outline" size="sm" onClick={() => refetch()} disabled={designMode}>
         Actualizar
