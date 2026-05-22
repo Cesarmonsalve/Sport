@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CollapsiblePlayerGallery } from "@/components/editor/player-gallery-panel";
+import { EspnRosterPanel } from "@/components/editor/espn-roster-panel";
+import { CanvasBackgroundPanel } from "@/components/editor/canvas-background-panel";
 import { LayerPanel } from "@/components/editor/layer-panel";
 import { Input } from "@/components/ui/input";
 import { useEditorStore } from "@/lib/store/editor-store";
@@ -139,6 +141,8 @@ export function EditorSidebar({ sport }: EditorSidebarProps) {
       )}
 
       <div className="flex-1 overflow-y-auto p-2">
+        {!collapsed && activeNav === "data" && <EspnRosterPanel sport={sport} />}
+        {!collapsed && activeNav === "config" && <CanvasBackgroundPanel />}
         {!collapsed && activeNav === "overlays" && <LayerPanel sport={sport} />}
         {!collapsed && activeNav === "widgets" &&
           Object.entries(byCat).map(([cat, items]) => (

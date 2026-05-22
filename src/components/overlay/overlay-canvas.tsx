@@ -23,6 +23,7 @@ import { MlbWebcamFrames } from "@/components/overlay/mlb/mlb-webcam-frames";
 import { SponsorTicker } from "@/components/overlay/sponsor-ticker";
 import { BroadcastTicker } from "@/components/overlay/shared/broadcast-ticker";
 import { LowerThird } from "@/components/overlay/shared/lower-third";
+import { SmartSlotLayer } from "@/components/editor/smart-slot-layer";
 import { useEditorStore } from "@/lib/store/editor-store";
 import type { Sport } from "@/types";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,10 @@ export const OverlayCanvas = memo(function OverlayCanvas({
 }: OverlayCanvasProps) {
   const searchParams = useSearchParams();
   const widget = widgetProp ?? searchParams.get("widget");
+  const showBg = searchParams.get("bg") === "1";
   const designMode = useEditorStore((s) => s.designMode);
+  const canvasBackground = useEditorStore((s) => s.canvasBackground);
+  const brandKit = useEditorStore((s) => s.brandKit);
   const templateId = useEditorStore((s) => s.templateId);
   const sceneTransition = useEditorStore((s) => s.sceneTransition);
   const sceneTransitionMs = useEditorStore((s) => s.sceneTransitionMs);
@@ -82,29 +86,48 @@ export const OverlayCanvas = memo(function OverlayCanvas({
         }
       }}
     >
-      {useEditorStore.getState().brandKit.backgroundVideo && (
+      {(interactive || showBg) && brandKit.backgroundVideo && (
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
           style={{
-            opacity: (useEditorStore.getState().brandKit.backgroundOpacity ?? 100) / 100,
-            filter: `blur(${useEditorStore.getState().brandKit.backgroundBlur ?? 0}px)`,
+            opacity: (brandKit.backgroundOpacity ?? 100) / 100,
+            filter: `blur(${brandKit.backgroundBlur ?? 0}px)`,
           }}
-          src={useEditorStore.getState().brandKit.backgroundVideo}
+          src={brandKit.backgroundVideo}
         />
       )}
-      {!useEditorStore.getState().brandKit.backgroundVideo && useEditorStore.getState().brandKit.backgroundImage && (
-        <img
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-          style={{
-            opacity: (useEditorStore.getState().brandKit.backgroundOpacity ?? 100) / 100,
-            filter: `blur(${useEditorStore.getState().brandKit.backgroundBlur ?? 0}px)`,
-          }}
-          src={useEditorStore.getState().brandKit.backgroundImage}
-          alt=""
+      {(interactive || showBg) &&
+        !brandKit.backgroundVideo &&
+        brandKit.backgroundImage && (
+          <div
+            className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+            style={{
+              background: brandKit.backgroundImage.startsWith("linear") ||
+                brandKit.backgroundImage.startsWith("radial")
+                ? brandKit.backgroundImage
+                : undefined,
+              opacity: (brandKit.backgroundOpacity ?? 100) / 100,
+              filter: `blur(${brandKit.backgroundBlur ?? canvasBackground?.blur ?? 0}px)`,
+            }}
+          >
+            {!brandKit.backgroundImage.startsWith("linear") &&
+              !brandKit.backgroundImage.startsWith("radial") && (
+                <img
+                  className="h-full w-full object-cover"
+                  src={brandKit.backgroundImage}
+                  alt=""
+                />
+              )}
+          </div>
+        )}
+      {(interactive || showBg) && (canvasBackground?.darken ?? 0) > 0 && (
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] bg-black"
+          style={{ opacity: (canvasBackground?.darken ?? 0) / 100 }}
         />
       )}
       {designMode && (
@@ -113,6 +136,7 @@ export const OverlayCanvas = memo(function OverlayCanvas({
         </div>
       )}
       <ScoreConfetti />
+      <SmartSlotLayer sport={sport} interactive={interactive} />
       <FreeCanvasLayer interactive={interactive} />
       <AnimatePresence mode="wait">
         <motion.div

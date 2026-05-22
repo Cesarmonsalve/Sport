@@ -189,6 +189,37 @@ export function InspectorPanel({ sport }: InspectorPanelProps) {
               </TabsContent>
 
               <TabsContent value="style" className="mt-3 space-y-4">
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Formas (design tokens)
+                  </p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {(
+                      [
+                        ["default", "Default"],
+                        ["glass", "Glass"],
+                        ["tech-border", "Tech border"],
+                        ["minimal", "Minimal"],
+                        ["broadcast-plate", "Broadcast"],
+                        ["neon-accent", "Neón accent"],
+                      ] as const
+                    ).map(([v, label]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        data-variant={v}
+                        className={`rounded border px-2 py-1.5 text-[9px] ${
+                          (style.designVariant ?? "default") === v
+                            ? "border-primary ring-1 ring-primary"
+                            : "border-border"
+                        }`}
+                        onClick={() => patchStyle({ designVariant: v })}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <InspectorTypographyTab style={style} setStyle={patchStyle} />
                 <InspectorColorsTab style={style} setStyle={patchStyle} />
                 <InspectorImageTab style={style} setStyle={patchStyle} />

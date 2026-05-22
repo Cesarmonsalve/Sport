@@ -60,6 +60,7 @@ export const MovableLayer = memo(function MovableLayer({
   const inlineEditId = useEditorStore((s) => s.inlineEditId);
   const setInlineEditId = useEditorStore((s) => s.setInlineEditId);
   const setSelectedId = useEditorStore((s) => s.setSelectedId);
+  const setSelectedIds = useEditorStore((s) => s.setSelectedIds);
   const setTextOverride = useEditorStore((s) => s.setTextOverride);
   const assignGalleryPlayerToSlot = useEditorStore((s) => s.assignGalleryPlayerToSlot);
   const setDropHighlightId = useEditorStore((s) => s.setDropHighlightId);
@@ -121,7 +122,7 @@ export const MovableLayer = memo(function MovableLayer({
   const h = parseFloat(style.height ?? "64") || 64;
 
   const canvasScale = useCanvasScale();
-  const { onPointerDown } = useLayerDrag(
+  const { onPointerDown: onDragPointerDown } = useLayerDrag(
     id,
     canDrag,
     pos?.left,
@@ -131,6 +132,30 @@ export const MovableLayer = memo(function MovableLayer({
     w,
     h,
     canvasScale
+  );
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (interactive && e.shiftKey && e.button === 0) {
+        e.stopPropagation();
+        const cur = selectedIds;
+        const next = cur.includes(id)
+          ? cur.filter((x) => x !== id)
+          : [...cur, id];
+        setSelectedIds(next.length ? next : [id]);
+        setSelectedId(id);
+        return;
+      }
+      onDragPointerDown(e);
+    },
+    [
+      interactive,
+      id,
+      selectedIds,
+      setSelectedIds,
+      setSelectedId,
+      onDragPointerDown,
+    ]
   );
 
   const editRef = useRef<HTMLSpanElement>(null);

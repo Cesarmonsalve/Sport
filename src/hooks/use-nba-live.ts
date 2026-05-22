@@ -16,6 +16,7 @@ import {
 } from "@/lib/espn/gallery";
 import { preloadTeamLogos } from "@/lib/espn/logos";
 import { mergeNbaPlayersToSlots } from "@/lib/espn/player-slots";
+import { mergeSmartSlotsFromNbaGame } from "@/lib/smart-slots/merge";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { loadAppSettings } from "@/lib/settings/app-settings";
 
@@ -70,9 +71,13 @@ export function useNbaLive(events: EspnNbaEvent[]) {
     prevIdsRef.current = ids;
     prevGameRef.current = parsed;
 
-    const slots = useEditorStore.getState().playerSlots;
-    const merged = mergeNbaPlayersToSlots(parsed, slots);
-    setPlayerSlots(merged.bindings);
+    const st = useEditorStore.getState();
+    const merged = mergeNbaPlayersToSlots(parsed, st.playerSlots);
+    let bindings = merged.bindings;
+    if (Object.keys(st.smartSlots).length) {
+      bindings = mergeSmartSlotsFromNbaGame(merged.game, st.smartSlots, bindings);
+    }
+    setPlayerSlots(bindings);
     setNbaGame(merged.game);
     const gallery = extractGalleryFromSummary(
       summaryQuery.data,

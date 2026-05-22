@@ -47,7 +47,15 @@ export interface BrandKit {
   backgroundVideo?: string;
   backgroundBlur?: number;
   backgroundOpacity?: number;
-  globalDesignVariant?: "default" | "glass" | "neon" | "metallic";
+  globalDesignVariant?:
+    | "default"
+    | "glass"
+    | "neon"
+    | "metallic"
+    | "tech-border"
+    | "minimal"
+    | "broadcast-plate"
+    | "neon-accent";
   sponsorSlots: SponsorSlot[];
 }
 
@@ -168,7 +176,15 @@ export type ElementStyle = Partial<{
   imageUrl: string;
   objectFit: string;
   accentColor: string;
-  designVariant: "default" | "glass" | "neon" | "metallic";
+  designVariant:
+    | "default"
+    | "glass"
+    | "neon"
+    | "metallic"
+    | "tech-border"
+    | "minimal"
+    | "broadcast-plate"
+    | "neon-accent";
 }>;
 
 export interface ElementDataBinding {
@@ -180,6 +196,24 @@ export interface ElementDataBinding {
   displayLabel?: string;
 }
 
+export type SmartSlotType =
+  | "lineup-card"
+  | "field-name-only"
+  | "lower-third"
+  | "free";
+
+export interface SmartSlotDefinition {
+  id: string;
+  slotType: SmartSlotType;
+  label: string;
+  left: string;
+  top: string;
+  width?: string;
+  height?: string;
+  team?: "home" | "away";
+  slotIndex?: number;
+}
+
 export interface PlayerSlotBinding {
   slotId: string;
   athleteId?: string;
@@ -189,6 +223,15 @@ export interface PlayerSlotBinding {
   dataSource?: DataSource;
   manualName?: string;
   manualImageUrl?: string;
+}
+
+export type CanvasBackgroundPreset = "none" | "arena" | "stadium" | "custom";
+
+export interface CanvasBackground {
+  preset: CanvasBackgroundPreset;
+  imageUrl?: string;
+  darken: number;
+  blur: number;
 }
 
 export interface StreamSportsState {
@@ -208,6 +251,8 @@ export interface StreamSportsState {
   sceneTransitionMs?: number;
   brandKit?: BrandKit;
   tickerSlides?: TickerSlide[];
+  smartSlots?: Record<string, SmartSlotDefinition>;
+  canvasBackground?: CanvasBackground;
   visibility: Record<string, boolean>;
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;

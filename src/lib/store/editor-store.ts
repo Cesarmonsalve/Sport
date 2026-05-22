@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import type {
   BrandKit,
   AlignmentGuides,
+  CanvasBackground,
   EditorMode,
   ElementDataBinding,
   ElementStyle,
@@ -15,12 +16,19 @@ import type {
   PlayerSlotBinding,
   SceneTransition,
   ScorebugStyle,
+  SmartSlotDefinition,
   Sport,
   StreamSportsState,
   TickerSlide,
   WidgetDisplaySettings,
   FreeCanvasElement,
 } from "@/types";
+import {
+  BASE_COURT_TEMPLATES,
+  slotsToRecords,
+  type BaseCourtTemplateId,
+} from "@/lib/smart-slots/base-templates";
+import { bindingFromPlayer } from "@/lib/smart-slots/merge";
 import { DEFAULT_BRAND_KIT, DEFAULT_TICKER_SLIDES } from "@/lib/brand-kit/defaults";
 import { captureHistorySnap, MAX_HISTORY, type EditorHistorySnap } from "@/lib/store/history";
 import { galleryFromMlbGame, galleryFromNbaGame } from "@/lib/espn/gallery";
@@ -130,6 +138,8 @@ interface EditorStore {
   sceneTransitionMs: number;
   brandKit: BrandKit;
   tickerSlides: TickerSlide[];
+  smartSlots: Record<string, SmartSlotDefinition>;
+  canvasBackground: CanvasBackground;
   previewMode: boolean;
   showSafeZone: boolean;
   showRulers: boolean;
@@ -194,6 +204,9 @@ interface EditorStore {
   applyLineupPreset: (presetId: string) => void;
   setGalleryPlayers: (players: GalleryPlayer[]) => void;
   assignGalleryPlayerToSlot: (slotId: string, player: GalleryPlayer) => void;
+  applyBaseTemplate: (templateId: BaseCourtTemplateId) => void;
+  setCanvasBackground: (bg: Partial<CanvasBackground>) => void;
+  setSmartSlots: (slots: Record<string, SmartSlotDefinition>) => void;
   setConfettiEnabled: (v: boolean) => void;
   setDropHighlightId: (id: string | null) => void;
   syncTeamLogosFromGame: () => void;
@@ -304,6 +317,8 @@ export const useEditorStore = create<EditorStore>()(
       sceneTransitionMs: 500,
       brandKit: { ...DEFAULT_BRAND_KIT },
       tickerSlides: [...DEFAULT_TICKER_SLIDES],
+      smartSlots: {},
+      canvasBackground: { preset: "none", darken: 0, blur: 0 },
       previewMode: false,
       showSafeZone: false,
       showRulers: true,
@@ -720,34 +735,75 @@ export const useEditorStore = create<EditorStore>()(
         });
       },
       setGalleryPlayers: (galleryPlayers) => set({ galleryPlayers }),
-      assignGalleryPlayerToSlot: (slotId, player) => {
-        const label = `${player.name}${player.jersey ? ` #${player.jersey}` : ""} · ${player.teamAbbr}`;
+      setSmartSlots: (smartSlots) => set({ smartSlots }),
+      setCanvasBackground: (patch) =>
         set((s) => ({
-          dataBindings: {
-            ...s.dataBindings,
-            [slotId]: {
-              dataSource: "manual",
-              manualText: player.name,
-              manualImageUrl: player.headshot,
-              athleteId: player.id,
-              displayLabel: label,
-            },
+          canvasBackground: { ...s.canvasBackground, ...patch },
+        })),
+      applyBaseTemplate: (templateId) => {
+        const tpl = BASE_COURT_TEMPLATES[templateId];
+        if (!tpl) return;
+        get().pushHistory();
+        const { positions, smartSlots, visibility: slotVis } = slotsToRecords(tpl.slots);
+        set((s) => ({
+          sport: tpl.sport,
+          smartSlots,
+          positions: { ...s.positions, ...positions },
+          visibility: { ...s.visibility, ...tpl.visibility, ...slotVis },
+          canvasBackground: {
+            preset: "custom",
+            imageUrl: tpl.backgroundImage,
+            darken: tpl.backgroundDarken,
+            blur: 0,
           },
-          playerSlots: {
-            ...s.playerSlots,
-            [slotId]: {
-              slotId,
-              athleteId: player.id,
-              team: player.team,
-              slotIndex: 0,
-              position: player.position,
-              dataSource: "manual",
-              manualName: player.name,
-              manualImageUrl: player.headshot,
-            },
+          brandKit: {
+            ...s.brandKit,
+            backgroundImage: tpl.backgroundImage,
+            backgroundOpacity: Math.max(15, 100 - tpl.backgroundDarken),
+            backgroundBlur: 0,
           },
-          rotationNotice: `Asignado: ${label}`,
+          widgetSettings: {
+            ...s.widgetSettings,
+            "court-positions-widget": { markerStyle: "name", markerShowPhoto: false },
+            "field-positions-widget": { markerStyle: "name", markerShowPhoto: false },
+          },
+          rotationNotice: `Plantilla «${tpl.name}» — arrastra jugadores a los slots`,
         }));
+        get()._layoutPublisher?.();
+        window.setTimeout(() => get().setRotationNotice(null), 3500);
+      },
+      assignGalleryPlayerToSlot: (slotId, player) => {
+        get().pushHistory();
+        const slotDef = get().smartSlots[slotId];
+        const { binding, data } = slotDef
+          ? bindingFromPlayer(slotDef, player)
+          : {
+              binding: {
+                slotId,
+                athleteId: player.id,
+                team: player.team,
+                slotIndex: 0,
+                position: player.position,
+                dataSource: "manual" as const,
+                manualName: player.name,
+                manualImageUrl: player.headshot,
+              },
+              data: {
+                dataSource: "manual" as const,
+                manualText: player.name,
+                manualImageUrl: player.headshot,
+                athleteId: player.id,
+                displayLabel: `${player.name} · ${player.teamAbbr}`,
+              },
+            };
+        const label = data.displayLabel ?? player.name;
+        set((s) => ({
+          dataBindings: { ...s.dataBindings, [slotId]: data },
+          playerSlots: { ...s.playerSlots, [slotId]: binding },
+          rotationNotice: `Asignado: ${label}`,
+          dirtyIds: [...new Set([...s.dirtyIds, slotId])],
+        }));
+        get()._layoutPublisher?.();
         window.setTimeout(() => get().setRotationNotice(null), 2500);
       },
       setConfettiEnabled: (confettiEnabled) => set({ confettiEnabled }),
@@ -877,6 +933,9 @@ export const useEditorStore = create<EditorStore>()(
           sceneTransitionMs: state.sceneTransitionMs ?? s.sceneTransitionMs,
           brandKit: state.brandKit ? { ...s.brandKit, ...state.brandKit } : s.brandKit,
           tickerSlides: state.tickerSlides ?? s.tickerSlides,
+          smartSlots: state.smartSlots ?? s.smartSlots,
+          canvasBackground: state.canvasBackground ?? s.canvasBackground,
+          playerSlots: { ...s.playerSlots, ...state.playerSlots },
           visibility: { ...s.visibility, ...state.visibility },
           positions: { ...s.positions, ...state.positions },
           elements: { ...s.elements, ...state.elements },
@@ -934,6 +993,9 @@ export const useEditorStore = create<EditorStore>()(
           if (isFreeLayoutId(key)) delete cleanEl[key];
         }
 
+        const cleanSmart = { ...s.smartSlots };
+        for (const key of Object.keys(cleanSmart)) delete cleanSmart[key];
+
         set({
           positions: cleanPos,
           elements: cleanEl,
@@ -941,6 +1003,7 @@ export const useEditorStore = create<EditorStore>()(
           zIndex: cleanZ,
           textOverrides: {},
           freeElements: [],
+          smartSlots: cleanSmart,
           userTouchedElements: [],
           dirtyIds: [],
           selectedId: null,
@@ -1001,6 +1064,8 @@ export const useEditorStore = create<EditorStore>()(
           sceneTransitionMs: s.sceneTransitionMs,
           brandKit: s.brandKit,
           tickerSlides: s.tickerSlides,
+          smartSlots: s.smartSlots,
+          canvasBackground: s.canvasBackground,
           game,
           ts: Date.now(),
         };
@@ -1035,6 +1100,8 @@ export const useEditorStore = create<EditorStore>()(
         sceneTransitionMs: s.sceneTransitionMs,
         brandKit: s.brandKit,
         tickerSlides: s.tickerSlides,
+        smartSlots: s.smartSlots,
+        canvasBackground: s.canvasBackground,
       }),
     }
   )
