@@ -2,6 +2,15 @@ export type Sport = "nba" | "mlb";
 
 export type EditorMode = "simple" | "advanced";
 
+export type SnapMode = "off" | "grid" | "elements" | "both";
+
+export type CanvasFitMode = "fit" | "fit-width" | number;
+
+export interface AlignmentGuides {
+  vertical: number[];
+  horizontal: number[];
+}
+
 export type ScorebugStyle =
   | "broadcast"
   | "glass"
@@ -146,6 +155,9 @@ export type ElementStyle = Partial<{
   margin: string;
   gap: string;
   animation: WidgetAnimation;
+  animationDurationMs?: string;
+  animationEasing?: string;
+  animationTrigger?: string;
   zIndex: string;
   rotate: string;
   imageUrl: string;

@@ -5,6 +5,7 @@ import { motion, type TargetAndTransition } from "framer-motion";
 import { LayerTransformHandles } from "@/components/editor/layer-transform-handles";
 import { elementStyleToCss } from "@/lib/overlay/style-to-css";
 import { useEditorStore } from "@/lib/store/editor-store";
+import { useCanvasScale } from "@/components/editor/canvas-scale-context";
 import { useLayerDrag } from "@/hooks/use-layer-drag";
 import { GALLERY_DRAG_MIME } from "@/components/editor/player-gallery-panel";
 import type { GalleryPlayer, WidgetAnimation } from "@/types";
@@ -116,13 +117,17 @@ export const MovableLayer = memo(function MovableLayer({
   const w = parseFloat(style.width ?? "120") || 120;
   const h = parseFloat(style.height ?? "64") || 64;
 
-  const { onPointerDown, guide } = useLayerDrag(
+  const canvasScale = useCanvasScale();
+  const { onPointerDown } = useLayerDrag(
     id,
     canDrag,
     pos?.left,
     pos?.top,
     style.left,
-    style.top
+    style.top,
+    w,
+    h,
+    canvasScale
   );
 
   const editRef = useRef<HTMLSpanElement>(null);
@@ -198,17 +203,7 @@ export const MovableLayer = memo(function MovableLayer({
     tabIndex: canDrag ? 0 : undefined,
   };
 
-  const guideEl =
-    guide && isSelected ? (
-      <>
-        {guide.x != null && (
-          <div className="pointer-events-none fixed inset-y-0 w-px bg-primary/50 z-[9998]" style={{ left: guide.x }} />
-        )}
-        {guide.y != null && (
-          <div className="pointer-events-none fixed inset-x-0 h-px bg-primary/50 z-[9998]" style={{ top: guide.y }} />
-        )}
-      </>
-    ) : null;
+  const animMs = parseInt(style.animationDurationMs ?? "350", 10) || 350;
 
   const handles =
     isSelected && interactive && !lockedIds[id] && !streamSafePreview ? (
@@ -224,27 +219,21 @@ export const MovableLayer = memo(function MovableLayer({
 
   if (animation === "none") {
     return (
-      <>
-        {guideEl}
-        <div {...shared} className={cn(shared.className, "relative inline-block")}>
-          {inner}
-        </div>
-      </>
+      <div {...shared} className={cn(shared.className, "relative inline-block")}>
+        {inner}
+      </div>
     );
   }
 
   return (
-    <>
-      {guideEl}
-      <motion.div
-        {...shared}
-        className={cn(shared.className, "relative inline-block")}
-        initial={variant.initial}
-        animate={variant.animate}
-        transition={{ duration: 0.35 }}
-      >
-        {inner}
-      </motion.div>
-    </>
+    <motion.div
+      {...shared}
+      className={cn(shared.className, "relative inline-block")}
+      initial={variant.initial}
+      animate={variant.animate}
+      transition={{ duration: animMs / 1000 }}
+    >
+      {inner}
+    </motion.div>
   );
 });

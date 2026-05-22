@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { OverlayCanvas } from "@/components/overlay/overlay-canvas";
+import { CanvasChrome } from "@/components/editor/canvas-chrome";
+import { CanvasToolbar } from "@/components/editor/canvas-toolbar";
+import { CanvasScaleContext } from "@/components/editor/canvas-scale-context";
 import { GALLERY_DRAG_MIME } from "@/components/editor/player-gallery-panel";
 import { useEditorStore } from "@/lib/store/editor-store";
 import type { GalleryPlayer, Sport } from "@/types";
@@ -31,6 +34,14 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
   const placeFreeDrop = useEditorStore((s) => s.placeFreeDrop);
   const streamSafe = useEditorStore((s) => s.streamSafePreview);
   const showHints = useEditorStore((s) => s.showEditorHints);
+  const canvasZoom = useEditorStore((s) => s.canvasZoom);
+  const setCanvasZoom = useEditorStore((s) => s.setCanvasZoom);
+  const canvasPan = useEditorStore((s) => s.canvasPan);
+  const setCanvasPan = useEditorStore((s) => s.setCanvasPan);
+  const setCanvasFitMode = useEditorStore((s) => s.setCanvasFitMode);
+  const canvasFitMode = useEditorStore((s) => s.canvasFitMode);
+
+  const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{
     x0: number;
@@ -39,12 +50,77 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
     y1: number;
   } | null>(null);
   const origin = useRef<{ x: number; y: number } | null>(null);
+  const panning = useRef(false);
+  const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const spaceHeld = useRef(false);
 
-  const scale = useMemo(() => {
+  const fitScale = useMemo(() => {
     if (typeof window === "undefined") return 0.5;
-    const maxW = Math.min(1100, window.innerWidth - 480);
-    return Math.min(maxW / CANVAS_W, 0.55);
+    const el = viewportRef.current;
+    const maxW = (el?.clientWidth ?? Math.min(1100, window.innerWidth - 480)) - 48;
+    const maxH = (el?.clientHeight ?? 600) - 80;
+    const fitW = maxW / CANVAS_W;
+    const fitH = maxH / CANVAS_H;
+    return Math.min(fitW, fitH, 1);
   }, []);
+
+  const scale = canvasFitMode === "manual" ? canvasZoom : fitScale;
+
+  useEffect(() => {
+    if (canvasFitMode === "fit" || canvasFitMode === "fit-width") {
+      const s =
+        canvasFitMode === "fit-width"
+          ? Math.min((viewportRef.current?.clientWidth ?? 900) / CANVAS_W, 1)
+          : fitScale;
+      setCanvasZoom(s);
+    }
+  }, [canvasFitMode, fitScale, setCanvasZoom]);
+
+  const onFit = useCallback(() => {
+    setCanvasFitMode("fit");
+    setCanvasZoom(fitScale);
+    setCanvasPan({ x: 0, y: 0 });
+  }, [fitScale, setCanvasFitMode, setCanvasPan, setCanvasZoom]);
+
+  const onFitWidth = useCallback(() => {
+    const w = viewportRef.current?.clientWidth ?? 900;
+    setCanvasFitMode("fit-width");
+    setCanvasZoom(Math.min(w / CANVAS_W, 1));
+    setCanvasPan({ x: 0, y: 0 });
+  }, [setCanvasFitMode, setCanvasPan, setCanvasZoom]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !(e.target as HTMLElement)?.closest("input,textarea,select")) {
+        spaceHeld.current = true;
+        e.preventDefault();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") spaceHeld.current = false;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      setCanvasFitMode("manual");
+      setCanvasZoom(
+        Math.min(2, Math.max(0.25, useEditorStore.getState().canvasZoom - e.deltaY * 0.001))
+      );
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [setCanvasFitMode, setCanvasZoom]);
 
   const onCanvasDrop = useCallback(
     (e: React.DragEvent) => {
@@ -71,8 +147,19 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
     }
   }, []);
 
-  const onPointerDown = useCallback(
+  const onViewportPointerDown = useCallback(
     (e: React.PointerEvent) => {
+      if (spaceHeld.current && e.button === 0) {
+        panning.current = true;
+        panStart.current = {
+          x: e.clientX,
+          y: e.clientY,
+          panX: canvasPan.x,
+          panY: canvasPan.y,
+        };
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+        return;
+      }
       if (!e.shiftKey || e.button !== 0) return;
       if ((e.target as HTMLElement).closest("[data-editable]")) return;
       origin.current = { x: e.clientX, y: e.clientY };
@@ -109,8 +196,25 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [setSelectedIds]
+    [canvasPan.x, canvasPan.y, setSelectedIds]
   );
+
+  const onViewportPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!panning.current) return;
+      const dx = e.clientX - panStart.current.x;
+      const dy = e.clientY - panStart.current.y;
+      setCanvasPan({
+        x: panStart.current.panX + dx,
+        y: panStart.current.panY + dy,
+      });
+    },
+    [setCanvasPan]
+  );
+
+  const onViewportPointerUp = useCallback(() => {
+    panning.current = false;
+  }, []);
 
   const selBox = box
     ? {
@@ -122,42 +226,55 @@ export function EditorCanvasPreview({ sport }: EditorCanvasPreviewProps) {
     : null;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center overflow-hidden bg-[#06070a] p-4">
-      {showHints && (
-        <p className="mb-2 max-w-lg text-center text-[10px] text-muted-foreground">
-          Galería colapsable en sidebar · suelta foto en cualquier punto del canvas · Ctrl+Z deshacer
-        </p>
-      )}
-      <motion.div
-        layout
-        className="relative rounded-lg border border-border shadow-2xl"
-        style={{ width: CANVAS_W * scale, height: CANVAS_H * scale }}
-        onPointerDown={onPointerDown}
+    <div className="flex flex-1 flex-col min-h-0 bg-[#06070a]">
+      <div
+        ref={viewportRef}
+        className="flex flex-1 items-center justify-center overflow-auto p-4"
+        style={{ cursor: spaceHeld.current ? "grab" : undefined }}
+        onPointerDown={onViewportPointerDown}
+        onPointerMove={onViewportPointerMove}
+        onPointerUp={onViewportPointerUp}
       >
-        <div
-          ref={canvasRef}
-          className="relative overflow-hidden rounded-lg bg-black/40"
-          style={{ width: CANVAS_W * scale, height: CANVAS_H * scale }}
-          onDrop={onCanvasDrop}
-          onDragOver={onDragOver}
+        {showHints && (
+          <p className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-lg text-center text-[10px] text-muted-foreground pointer-events-none">
+            Ctrl+rueda zoom · Space+arrastrar pan · Shift+box selección
+          </p>
+        )}
+        <motion.div
+          layout
+          className="relative rounded-lg border border-border shadow-2xl shrink-0"
+          style={{
+            width: CANVAS_W * scale,
+            height: CANVAS_H * scale,
+            transform: `translate(${canvasPan.x}px, ${canvasPan.y}px)`,
+          }}
         >
-          <OverlayCanvas
-            sport={sport}
-            scale={scale}
-            interactive
-            streamSafePreview={streamSafe}
-          />
-        </div>
+          <CanvasScaleContext.Provider value={scale}>
+            <div
+              ref={canvasRef}
+              className="relative overflow-hidden rounded-lg bg-black/40"
+              style={{ width: CANVAS_W * scale, height: CANVAS_H * scale }}
+              onDrop={onCanvasDrop}
+              onDragOver={onDragOver}
+            >
+              <CanvasChrome scale={scale} />
+              <OverlayCanvas
+                sport={sport}
+                scale={scale}
+                interactive
+                streamSafePreview={streamSafe}
+              />
+            </div>
+          </CanvasScaleContext.Provider>
+        </motion.div>
         {selBox && (
           <div
             className="pointer-events-none fixed z-[9999] border border-primary bg-primary/10"
             style={selBox}
           />
         )}
-        <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] text-muted-foreground">
-          Suelta foto libre · Shift+box · Ctrl+Z/Y undo
-        </div>
-      </motion.div>
+      </div>
+      <CanvasToolbar onFit={onFit} onFitWidth={onFitWidth} />
     </div>
   );
 }

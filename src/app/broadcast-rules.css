@@ -1,0 +1,90 @@
+/**
+ * Broadcast design tokens — 1920×1080 safe zones & editor overlays
+ */
+:root {
+  --ss-canvas-w: 1920px;
+  --ss-canvas-h: 1080px;
+  --ss-safe-margin: 5%;
+  --ss-safe-left: calc(var(--ss-canvas-w) * var(--ss-safe-margin));
+  --ss-safe-top: calc(var(--ss-canvas-h) * var(--ss-safe-margin));
+  --ss-safe-right: calc(var(--ss-canvas-w) * (1 - var(--ss-safe-margin)));
+  --ss-safe-bottom: calc(var(--ss-canvas-h) * (1 - var(--ss-safe-margin)));
+  --ss-guide-color: rgba(0, 184, 212, 0.65);
+  --ss-safe-color: rgba(239, 68, 68, 0.35);
+  --ss-ruler-bg: rgba(18, 20, 26, 0.95);
+  --ss-ruler-tick: rgba(255, 255, 255, 0.25);
+}
+
+.ss-canvas-rulers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9000;
+}
+
+.ss-ruler-top,
+.ss-ruler-left {
+  position: absolute;
+  background: var(--ss-ruler-bg);
+  font-size: 9px;
+  font-family: var(--font-mono), monospace;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ss-ruler-top {
+  top: 0;
+  left: 24px;
+  right: 0;
+  height: 20px;
+  border-bottom: 1px solid var(--ss-ruler-tick);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 39px,
+    var(--ss-ruler-tick) 39px,
+    var(--ss-ruler-tick) 40px
+  );
+}
+
+.ss-ruler-left {
+  left: 0;
+  top: 24px;
+  bottom: 0;
+  width: 20px;
+  border-right: 1px solid var(--ss-ruler-tick);
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 39px,
+    var(--ss-ruler-tick) 39px,
+    var(--ss-ruler-tick) 40px
+  );
+}
+
+.ss-safe-zone-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 8999;
+  border: 1px dashed var(--ss-safe-color);
+  box-shadow: inset 0 0 0 9999px rgba(239, 68, 68, 0.04);
+}
+
+.ss-align-guide-v,
+.ss-align-guide-h {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9001;
+  background: var(--ss-guide-color);
+}
+
+.ss-align-guide-v {
+  width: 1px;
+  top: 0;
+  bottom: 0;
+}
+
+.ss-align-guide-h {
+  height: 1px;
+  left: 0;
+  right: 0;
+}

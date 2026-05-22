@@ -27,6 +27,7 @@ export function useEditorShortcuts() {
   const lockedIds = useEditorStore((s) => s.lockedIds);
   const setStreamSafePreview = useEditorStore((s) => s.setStreamSafePreview);
   const setPreviewMode = useEditorStore((s) => s.setPreviewMode);
+  const setCanvasFitMode = useEditorStore((s) => s.setCanvasFitMode);
   const applyBroadcastScene = useEditorStore((s) => s.applyBroadcastScene);
   const copyStyleFromSelection = useEditorStore((s) => s.copyStyleFromSelection);
   const pasteStyleToSelection = useEditorStore((s) => s.pasteStyleToSelection);
@@ -103,7 +104,8 @@ export function useEditorShortcuts() {
       }
       if (e.key === "f" || e.key === "F") {
         if (!mod) {
-          setStreamSafePreview(true);
+          setCanvasFitMode("fit");
+          setStreamSafePreview(false);
           return;
         }
       }
@@ -197,6 +199,7 @@ export function useEditorShortcuts() {
     lockedIds,
     setStreamSafePreview,
     setPreviewMode,
+    setCanvasFitMode,
     applyBroadcastScene,
   ]);
 }

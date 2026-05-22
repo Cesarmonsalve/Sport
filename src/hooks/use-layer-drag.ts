@@ -1,42 +1,12 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
+import {
+  buildElementRects,
+  parsePx,
+  snapPosition,
+} from "@/lib/overlay/snap-engine";
 import { useEditorStore } from "@/lib/store/editor-store";
-
-const SNAP = 8;
-const SNAP_DIST = 6;
-
-function snapPx(n: number, enabled: boolean) {
-  if (!enabled) return n;
-  return Math.round(n / SNAP) * SNAP;
-}
-
-function snapToPeers(
-  id: string,
-  left: number,
-  top: number,
-  positions: Record<string, { left: string; top: string }>
-): { left: number; top: number; guide?: { x?: number; y?: number } } {
-  let bestL = left;
-  let bestT = top;
-  let guideX: number | undefined;
-  let guideY: number | undefined;
-
-  for (const [oid, pos] of Object.entries(positions)) {
-    if (oid === id) continue;
-    const ol = parseFloat(pos.left) || 0;
-    const ot = parseFloat(pos.top) || 0;
-    if (Math.abs(left - ol) < SNAP_DIST) {
-      bestL = ol;
-      guideX = ol;
-    }
-    if (Math.abs(top - ot) < SNAP_DIST) {
-      bestT = ot;
-      guideY = ot;
-    }
-  }
-  return { left: bestL, top: bestT, guide: guideX != null || guideY != null ? { x: guideX, y: guideY } : undefined };
-}
 
 export function useLayerDrag(
   id: string,
@@ -44,17 +14,23 @@ export function useLayerDrag(
   posLeft?: string,
   posTop?: string,
   styleLeft?: string,
-  styleTop?: string
+  styleTop?: string,
+  width?: number,
+  height?: number,
+  canvasScale = 1
 ) {
   const setPosition = useEditorStore((s) => s.setPosition);
   const setSelectedId = useEditorStore((s) => s.setSelectedId);
   const pushHistory = useEditorStore((s) => s.pushHistory);
-  const snapToGrid = useEditorStore((s) => s.snapToGrid);
-  const snapToElements = useEditorStore((s) => s.snapToElements);
+  const snapMode = useEditorStore((s) => s.snapMode);
   const positions = useEditorStore((s) => s.positions);
-  const [guide, setGuide] = useState<{ x?: number; y?: number } | null>(null);
+  const elements = useEditorStore((s) => s.elements);
+  const setAlignmentGuides = useEditorStore((s) => s.setAlignmentGuides);
   const dragging = useRef(false);
   const historyPushed = useRef(false);
+
+  const snapGrid = snapMode === "grid" || snapMode === "both";
+  const snapElements = snapMode === "elements" || snapMode === "both";
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -65,34 +41,45 @@ export function useLayerDrag(
       historyPushed.current = false;
       const startX = e.clientX;
       const startY = e.clientY;
-      const baseLeft = parseFloat(posLeft ?? styleLeft ?? "0") || 0;
-      const baseTop = parseFloat(posTop ?? styleTop ?? "0") || 0;
+      const baseLeft = parsePx(posLeft ?? styleLeft, 0);
+      const baseTop = parsePx(posTop ?? styleTop, 0);
+      const w = width ?? parsePx(elements[id]?.width, 120);
+      const h = height ?? parsePx(elements[id]?.height, 64);
+      const scale = canvasScale > 0 ? canvasScale : 1;
 
       const onMove = (ev: PointerEvent) => {
         if (!historyPushed.current) {
           pushHistory();
           historyPushed.current = true;
         }
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
+        const dx = (ev.clientX - startX) / scale;
+        const dy = (ev.clientY - startY) / scale;
         let left = baseLeft + dx;
         let top = baseTop + dy;
-        left = snapPx(left, snapToGrid);
-        top = snapPx(top, snapToGrid);
-        if (snapToElements) {
-          const snapped = snapToPeers(id, left, top, positions);
-          left = snapped.left;
-          top = snapped.top;
-          if (snapped.guide) setGuide(snapped.guide);
-          else setGuide({ x: left, y: top });
+
+        const peers = buildElementRects(positions, elements, id);
+        const snapped = snapPosition({
+          id,
+          left,
+          top,
+          width: w,
+          height: h,
+          peers,
+          snapGrid,
+          snapElements,
+        });
+        left = snapped.left;
+        top = snapped.top;
+        if (snapElements && (snapped.guides.vertical.length || snapped.guides.horizontal.length)) {
+          setAlignmentGuides(snapped.guides);
         } else {
-          setGuide({ x: left, y: top });
+          setAlignmentGuides(null);
         }
-        setPosition(id, { left: `${left}px`, top: `${top}px` });
+        setPosition(id, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
       };
       const onUp = () => {
         dragging.current = false;
-        setGuide(null);
+        setAlignmentGuides(null);
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
       };
@@ -106,14 +93,19 @@ export function useLayerDrag(
       posTop,
       styleLeft,
       styleTop,
-      snapToGrid,
-      snapToElements,
+      width,
+      height,
+      canvasScale,
+      snapGrid,
+      snapElements,
       positions,
+      elements,
       setPosition,
       setSelectedId,
       pushHistory,
+      setAlignmentGuides,
     ]
   );
 
-  return { onPointerDown, guide, isDragging: dragging.current };
+  return { onPointerDown, isDragging: dragging.current };
 }

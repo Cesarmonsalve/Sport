@@ -4,9 +4,11 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   BrandKit,
+  AlignmentGuides,
   EditorMode,
   ElementDataBinding,
   ElementStyle,
+  SnapMode,
   GalleryPlayer,
   MlbGameSnapshot,
   NbaGameSnapshot,
@@ -92,6 +94,7 @@ interface EditorStore {
   selectedIds: string[];
   sidebarCollapsed: boolean;
   snapToGrid: boolean;
+  snapMode: SnapMode;
   visibility: Record<string, boolean>;
   positions: Record<string, { left: string; top: string }>;
   elements: Record<string, ElementStyle>;
@@ -126,6 +129,12 @@ interface EditorStore {
   brandKit: BrandKit;
   tickerSlides: TickerSlide[];
   previewMode: boolean;
+  showSafeZone: boolean;
+  showRulers: boolean;
+  canvasZoom: number;
+  canvasPan: { x: number; y: number };
+  canvasFitMode: "fit" | "fit-width" | "manual";
+  alignmentGuides: AlignmentGuides | null;
   _history: EditorHistorySnap[];
   _historyIndex: number;
 
@@ -143,6 +152,14 @@ interface EditorStore {
   setSelectedIds: (ids: string[]) => void;
   toggleSidebar: () => void;
   setSnapToGrid: (v: boolean) => void;
+  setSnapMode: (m: SnapMode) => void;
+  setShowSafeZone: (v: boolean) => void;
+  setShowRulers: (v: boolean) => void;
+  setCanvasZoom: (z: number) => void;
+  setCanvasPan: (p: { x: number; y: number }) => void;
+  setCanvasFitMode: (m: "fit" | "fit-width" | "manual") => void;
+  setAlignmentGuides: (g: AlignmentGuides | null) => void;
+  nudgeCanvasPan: (dx: number, dy: number) => void;
   setVisibility: (id: string, visible: boolean) => void;
   setPosition: (id: string, pos: { left: string; top: string }) => void;
   nudgePosition: (id: string, dx: number, dy: number) => void;
@@ -247,6 +264,7 @@ export const useEditorStore = create<EditorStore>()(
       selectedIds: [],
       sidebarCollapsed: false,
       snapToGrid: true,
+      snapMode: "both",
       visibility: defaultVisibility("nba"),
       positions: defaultPositions("nba"),
       elements: {},
@@ -281,6 +299,12 @@ export const useEditorStore = create<EditorStore>()(
       brandKit: { ...DEFAULT_BRAND_KIT },
       tickerSlides: [...DEFAULT_TICKER_SLIDES],
       previewMode: false,
+      showSafeZone: false,
+      showRulers: true,
+      canvasZoom: 0.5,
+      canvasPan: { x: 0, y: 0 },
+      canvasFitMode: "fit",
+      alignmentGuides: null,
       _history: [captureHistorySnap({
         positions: defaultPositions("nba"),
         elements: {},
@@ -390,7 +414,17 @@ export const useEditorStore = create<EditorStore>()(
         }));
       },
       setStreamSafePreview: (streamSafePreview) => set({ streamSafePreview }),
-      setSnapToElements: (snapToElements) => set({ snapToElements }),
+      setSnapToElements: (snapToElements) =>
+        set({
+          snapToElements,
+          snapMode: snapToElements
+            ? get().snapToGrid
+              ? "both"
+              : "elements"
+            : get().snapToGrid
+              ? "grid"
+              : "off",
+        }),
       copyStyleFromSelection: () => {
         const id = get().selectedId;
         if (!id) return;
@@ -571,7 +605,32 @@ export const useEditorStore = create<EditorStore>()(
       setSelectedIds: (selectedIds) =>
         set({ selectedIds, selectedId: selectedIds[0] ?? null }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-      setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
+      setSnapToGrid: (snapToGrid) =>
+        set({
+          snapToGrid,
+          snapMode: snapToGrid
+            ? get().snapToElements
+              ? "both"
+              : "grid"
+            : get().snapToElements
+              ? "elements"
+              : "off",
+        }),
+      setSnapMode: (snapMode) =>
+        set({
+          snapMode,
+          snapToGrid: snapMode === "grid" || snapMode === "both",
+          snapToElements: snapMode === "elements" || snapMode === "both",
+        }),
+      setShowSafeZone: (showSafeZone) => set({ showSafeZone }),
+      setShowRulers: (showRulers) => set({ showRulers }),
+      setCanvasZoom: (canvasZoom) =>
+        set({ canvasZoom: Math.min(2, Math.max(0.25, canvasZoom)), canvasFitMode: "manual" }),
+      setCanvasPan: (canvasPan) => set({ canvasPan }),
+      setCanvasFitMode: (canvasFitMode) => set({ canvasFitMode }),
+      setAlignmentGuides: (alignmentGuides) => set({ alignmentGuides }),
+      nudgeCanvasPan: (dx, dy) =>
+        set((s) => ({ canvasPan: { x: s.canvasPan.x + dx, y: s.canvasPan.y + dy } })),
       setVisibility: (id, visible) =>
         set((s) => ({ visibility: { ...s.visibility, [id]: visible } })),
       setPosition: (id, pos) => {
@@ -897,6 +956,9 @@ export const useEditorStore = create<EditorStore>()(
         textOverrides: s.textOverrides,
         zIndex: s.zIndex,
         snapToGrid: s.snapToGrid,
+        snapMode: s.snapMode,
+        showSafeZone: s.showSafeZone,
+        showRulers: s.showRulers,
         templateId: s.templateId,
         templateName: s.templateName,
         playerSlots: s.playerSlots,

@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { appendRoomToPath } from "@/lib/sync/room";
-import type { Sport } from "@/types";
+import type { SnapMode, Sport } from "@/types";
 
 interface EditorHeaderProps {
   sport: Sport;
@@ -38,8 +38,8 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
   const syncStatus = useEditorStore((s) => s.syncStatus);
   const streamSafePreview = useEditorStore((s) => s.streamSafePreview);
   const setStreamSafePreview = useEditorStore((s) => s.setStreamSafePreview);
-  const snapToElements = useEditorStore((s) => s.snapToElements);
-  const setSnapToElements = useEditorStore((s) => s.setSnapToElements);
+  const snapMode = useEditorStore((s) => s.snapMode);
+  const setSnapMode = useEditorStore((s) => s.setSnapMode);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
   const historyIndex = useEditorStore((s) => s._historyIndex);
@@ -81,6 +81,22 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
         <LayoutDashboard className="h-3.5 w-3.5" />
         Partidos
       </Link>
+
+      <div className="hidden md:flex items-center gap-0.5 rounded-md border border-border p-0.5 mr-1">
+        {(["off", "grid", "elements", "both"] as SnapMode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setSnapMode(m)}
+            className={`px-2 py-0.5 text-[9px] rounded capitalize ${
+              snapMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+            }`}
+            title={`Snap: ${m}`}
+          >
+            {m === "off" ? "Off" : m === "grid" ? "Grid" : m === "elements" ? "Elem" : "Ambos"}
+          </button>
+        ))}
+      </div>
 
       <div className="ml-auto flex items-center gap-2">
         <Button
@@ -139,16 +155,6 @@ export function EditorHeader({ sport, room }: EditorHeaderProps) {
                     id="stream-safe"
                     checked={streamSafePreview}
                     onCheckedChange={setStreamSafePreview}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="snap-el" className="text-xs">
-                    Snap elementos
-                  </Label>
-                  <Switch
-                    id="snap-el"
-                    checked={snapToElements}
-                    onCheckedChange={setSnapToElements}
                   />
                 </div>
                 <div className="flex items-center justify-between gap-2">
