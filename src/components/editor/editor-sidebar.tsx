@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
 import { MLB_REGISTRY } from "@/lib/registry/mlb";

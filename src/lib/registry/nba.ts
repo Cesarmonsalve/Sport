@@ -46,6 +46,24 @@ export const NBA_REGISTRY: Record<string, RegistryEntry> = {
     parent: "nba-scorebug",
     defaults: { fontSize: "36px", fontFamily: "Bebas Neue", color: "#fbbf24", left: "280px", top: "48px" },
   }),
+  "fouls-v": entry("fouls-v", "Faltas visitante", "Marcador · situación", {
+    parent: "nba-scorebug",
+    defaults: { fontSize: "14px", fontFamily: "Rajdhani", left: "140px", top: "100px" },
+  }),
+  "fouls-h": entry("fouls-h", "Faltas local", "Marcador · situación", {
+    parent: "nba-scorebug",
+    defaults: { fontSize: "14px", fontFamily: "Rajdhani", left: "0", top: "100px" },
+  }),
+  "bonus-v": entry("bonus-v", "Bonus visitante", "Marcador · situación", { parent: "nba-scorebug" }),
+  "bonus-h": entry("bonus-h", "Bonus local", "Marcador · situación", { parent: "nba-scorebug" }),
+  "team-logo-v": entry("team-logo-v", "Logo visitante", "Marcador · equipos", {
+    parent: "nba-scorebug",
+    defaults: { left: "0", top: "-56px" },
+  }),
+  "team-logo-h": entry("team-logo-h", "Logo local", "Marcador · equipos", {
+    parent: "nba-scorebug",
+    defaults: { left: "240px", top: "-56px" },
+  }),
   "card-jugador": entry("card-jugador", "Tarjeta jugador", "Tarjetas", {
     compound: true,
     children: ["card-nombre-text", "card-stats"],

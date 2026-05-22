@@ -1,36 +1,44 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  eventToMlbSnapshot,
-  fetchMlbScoreboard,
-  type EspnMlbEvent,
-} from "@/lib/espn/mlb";
+import { fetchMlbScoreboard, type EspnMlbEvent } from "@/lib/espn/mlb";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { useEffect } from "react";
+import { useMlbLive } from "@/hooks/use-mlb-live";
+
+function isLiveState(state?: string) {
+  return state === "in";
+}
 
 export function useMlbScoreboard() {
+  const sport = useEditorStore((s) => s.sport);
   const designMode = useEditorStore((s) => s.designMode);
   const eventId = useEditorStore((s) => s.eventId);
-  const setMlbGame = useEditorStore((s) => s.setMlbGame);
   const setEventId = useEditorStore((s) => s.setEventId);
 
   const query = useQuery({
     queryKey: ["mlb-scoreboard"],
     queryFn: () => fetchMlbScoreboard(),
-    refetchInterval: designMode ? false : 30_000,
-    enabled: !designMode,
+    refetchInterval: designMode ? false : (q) => {
+      const events = q.state.data ?? [];
+      const sel = events.find((e) => e.id === eventId) ?? events[0];
+      return isLiveState(sel?.state) ? 12_000 : 30_000;
+    },
+    enabled: !designMode && sport === "mlb",
+    staleTime: 8_000,
   });
 
+  const events = query.data ?? ([] as EspnMlbEvent[]);
+
   useEffect(() => {
-    if (designMode || !query.data?.length) return;
-    const ev = query.data.find((e) => e.id === eventId) ?? query.data[0];
-    if (!eventId && ev) setEventId(ev.id);
-    if (ev) setMlbGame(eventToMlbSnapshot(ev));
-  }, [query.data, eventId, designMode, setMlbGame, setEventId]);
+    if (designMode || !events.length) return;
+    if (!eventId) setEventId(events[0].id);
+  }, [events, eventId, designMode, setEventId]);
+
+  useMlbLive(events);
 
   return {
-    events: query.data ?? ([] as EspnMlbEvent[]),
+    events,
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

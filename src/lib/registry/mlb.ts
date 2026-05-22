@@ -39,13 +39,25 @@ export const MLB_REGISTRY: Record<string, RegistryEntry> = {
     parent: "scoreboard",
     defaults: { fontSize: "22px", fontFamily: "Bebas Neue", color: "#c9a227" },
   }),
-  "line-score": entry("Line score", "Marcador", "Line score", {
+  "line-score": entry("line-score", "Line score por innings", "Line score", {
     compound: true,
     defaults: { left: "24px", top: "120px" },
   }),
-  "roster-widget": entry("Roster lineup", "Roster", "Roster", {
+  "bases-widget": entry("bases-widget", "Bases B/S/O", "Situación", {
+    compound: true,
+    defaults: { left: "1400px", top: "880px" },
+  }),
+  "matchup-widget": entry("matchup-widget", "Pitcher vs bateador", "Matchup", {
+    compound: true,
+    defaults: { left: "400px", top: "780px" },
+  }),
+  "roster-widget": entry("roster-widget", "Roster lineup (12)", "Roster", {
     compound: true,
     defaults: { left: "1400px", top: "200px" },
+  }),
+  "play-ticker": entry("play-ticker", "Play ticker", "Ticker", {
+    compound: true,
+    defaults: { left: "24px", top: "980px", width: "900px" },
   }),
 };
 

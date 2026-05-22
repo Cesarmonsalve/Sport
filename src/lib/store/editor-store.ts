@@ -39,6 +39,18 @@ function defaultVisibility(sport: Sport): Record<string, boolean> {
     out["nba-scorebug"] = true;
     out["card-jugador"] = false;
     out["quinteto-widget"] = false;
+    out["destacado-widget"] = false;
+    out["fouls-v"] = true;
+    out["fouls-h"] = true;
+    out["shot-clock"] = true;
+  }
+  if (sport === "mlb") {
+    out.scoreboard = true;
+    out["line-score"] = false;
+    out["bases-widget"] = false;
+    out["matchup-widget"] = false;
+    out["roster-widget"] = false;
+    out["play-ticker"] = false;
   }
   return out;
 }
@@ -176,8 +188,9 @@ export const useEditorStore = create<EditorStore>()(
           editorMode: s.editorMode,
           visibility: s.visibility,
           positions: s.positions,
-          elements,
+          elements: { ...s.elements, ...elements },
           game,
+          ts: Date.now(),
         };
       },
     }),

@@ -9,20 +9,29 @@ import { Button } from "@/components/ui/button";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { NBA_REGISTRY, NBA_PRESETS } from "@/lib/registry/nba";
 import { MLB_REGISTRY, MLB_PRESETS } from "@/lib/registry/mlb";
-import type { Sport } from "@/types";
+import type { Sport, WidgetAnimation } from "@/types";
 
 interface EditorInspectorProps {
   sport: Sport;
 }
 
+const ANIM_OPTIONS: { value: WidgetAnimation; label: string }[] = [
+  { value: "none", label: "Sin animación" },
+  { value: "fade", label: "Fade in" },
+  { value: "slide", label: "Slide in" },
+];
+
 export function EditorInspector({ sport }: EditorInspectorProps) {
   const selectedId = useEditorStore((s) => s.selectedId);
   const elements = useEditorStore((s) => s.elements);
   const visibility = useEditorStore((s) => s.visibility);
+  const nbaGame = useEditorStore((s) => s.nbaGame);
+  const mlbGame = useEditorStore((s) => s.mlbGame);
   const setElementStyle = useEditorStore((s) => s.setElementStyle);
   const setVisibility = useEditorStore((s) => s.setVisibility);
   const applyPreset = useEditorStore((s) => s.applyPreset);
   const editorMode = useEditorStore((s) => s.editorMode);
+  const designMode = useEditorStore((s) => s.designMode);
 
   const registry = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
   const presets = sport === "nba" ? NBA_PRESETS : MLB_PRESETS;
@@ -49,24 +58,14 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
             className="flex-1 overflow-y-auto p-4"
           >
             <Tabs defaultValue="design">
-              <TabsList className="w-full">
-                <TabsTrigger value="design" className="flex-1">
-                  Diseño
-                </TabsTrigger>
-                <TabsTrigger value="data" className="flex-1">
-                  Datos
-                </TabsTrigger>
-                {editorMode === "advanced" && (
-                  <TabsTrigger value="anim" className="flex-1">
-                    Anim.
-                  </TabsTrigger>
-                )}
-                <TabsTrigger value="vis" className="flex-1">
-                  Vis.
-                </TabsTrigger>
+              <TabsList className="w-full grid grid-cols-4">
+                <TabsTrigger value="design">Diseño</TabsTrigger>
+                <TabsTrigger value="data">Datos</TabsTrigger>
+                <TabsTrigger value="anim">Anim.</TabsTrigger>
+                <TabsTrigger value="vis">Vis.</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="design" className="space-y-3">
+              <TabsContent value="design" className="space-y-3 mt-3">
                 <div className="space-y-2">
                   <Label>Tamaño (px)</Label>
                   <Input
@@ -104,6 +103,29 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
                     }
                   />
                 </div>
+                {editorMode === "advanced" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Posición left</Label>
+                      <Input
+                        value={style.left ?? ""}
+                        onChange={(e) =>
+                          setElementStyle(selectedId, { left: e.target.value })
+                        }
+                        placeholder="48px"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Ancho</Label>
+                      <Input
+                        value={style.width ?? ""}
+                        onChange={(e) =>
+                          setElementStyle(selectedId, { width: e.target.value })
+                        }
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="pt-2">
                   <Label className="mb-2 block">Presets</Label>
                   <div className="flex flex-wrap gap-2">
@@ -121,19 +143,86 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
                 </div>
               </TabsContent>
 
-              <TabsContent value="data">
-                <p className="text-xs text-muted-foreground">
-                  Datos en vivo vía ESPN API. Selecciona partido en el dock inferior.
+              <TabsContent value="data" className="mt-3 space-y-2 text-xs">
+                {designMode && (
+                  <p className="text-amber-400/90">Modo diseño — datos mock</p>
+                )}
+                {sport === "nba" && (
+                  <>
+                    <p>
+                      <strong>Marcador:</strong> {nbaGame.awayAbbr} {nbaGame.scoreAway} @{" "}
+                      {nbaGame.homeAbbr} {nbaGame.scoreHome}
+                    </p>
+                    <p>
+                      <strong>Reloj:</strong> {nbaGame.period} {nbaGame.clock}
+                      {nbaGame.shotClock && ` · SC ${nbaGame.shotClock}`}
+                    </p>
+                    {nbaGame.featuredPlayer && (
+                      <p>
+                        <strong>Destacado:</strong> {nbaGame.featuredPlayer.name}
+                      </p>
+                    )}
+                    <p>
+                      <strong>En cancha:</strong>{" "}
+                      {(nbaGame.onCourtHome?.length ?? 0) + (nbaGame.onCourtAway?.length ?? 0)}{" "}
+                      jugadores
+                    </p>
+                    {nbaGame.lastRotation && (
+                      <p className="text-primary">
+                        Rotación: {nbaGame.lastRotation.playerIn.name} entra
+                      </p>
+                    )}
+                  </>
+                )}
+                {sport === "mlb" && (
+                  <>
+                    <p>
+                      <strong>Marcador:</strong> {mlbGame.awayAbbr} {mlbGame.scoreAway} ·{" "}
+                      {mlbGame.homeAbbr} {mlbGame.scoreHome}
+                    </p>
+                    <p>
+                      <strong>Inning:</strong> {mlbGame.inningHalf} {mlbGame.inning}
+                    </p>
+                    <p>
+                      <strong>Conteo:</strong> {mlbGame.balls}-{mlbGame.strikes}, {mlbGame.outs} out
+                    </p>
+                    {mlbGame.batter && (
+                      <p>
+                        <strong>Bateador:</strong> {mlbGame.batter.name}
+                      </p>
+                    )}
+                    {mlbGame.pitcher && (
+                      <p>
+                        <strong>Pitcher:</strong> {mlbGame.pitcher.name}
+                      </p>
+                    )}
+                  </>
+                )}
+                <p className="text-muted-foreground pt-2">
+                  Polling ESPN: scoreboard 12–30s, summary 5–20s en vivo.
                 </p>
               </TabsContent>
 
-              <TabsContent value="anim">
-                <p className="text-xs text-muted-foreground">
-                  Animaciones de score (P2) — próximamente.
-                </p>
+              <TabsContent value="anim" className="mt-3 space-y-3">
+                <Label>Entrada del widget</Label>
+                <div className="flex flex-col gap-1">
+                  {ANIM_OPTIONS.map((opt) => (
+                    <Button
+                      key={opt.value}
+                      variant={style.animation === opt.value ? "default" : "outline"}
+                      size="sm"
+                      className="justify-start"
+                      onClick={() =>
+                        setElementStyle(selectedId, { animation: opt.value })
+                      }
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
               </TabsContent>
 
-              <TabsContent value="vis" className="space-y-3">
+              <TabsContent value="vis" className="mt-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Visible en stream</Label>
                   <Switch
@@ -141,6 +230,15 @@ export function EditorInspector({ sport }: EditorInspectorProps) {
                     onCheckedChange={(v) => setVisibility(selectedId, v)}
                   />
                 </div>
+                {entry.children?.map((childId) => (
+                  <div key={childId} className="flex items-center justify-between pl-2">
+                    <Label className="text-xs">{registry[childId]?.label ?? childId}</Label>
+                    <Switch
+                      checked={visibility[childId] !== false}
+                      onCheckedChange={(v) => setVisibility(childId, v)}
+                    />
+                  </div>
+                ))}
               </TabsContent>
             </Tabs>
           </motion.div>

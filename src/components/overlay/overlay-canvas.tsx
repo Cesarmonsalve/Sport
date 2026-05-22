@@ -2,7 +2,15 @@
 
 import { useSearchParams } from "next/navigation";
 import { NbaScorebug } from "@/components/overlay/nba/nba-scorebug";
+import { NbaPlayerCard } from "@/components/overlay/nba/nba-player-card";
+import { NbaQuintet } from "@/components/overlay/nba/nba-quintet";
+import { NbaHighlight } from "@/components/overlay/nba/nba-highlight";
 import { MlbScoreboard } from "@/components/overlay/mlb/mlb-scoreboard";
+import { MlbLineScore } from "@/components/overlay/mlb/mlb-line-score";
+import { MlbBases } from "@/components/overlay/mlb/mlb-bases";
+import { MlbMatchup } from "@/components/overlay/mlb/mlb-matchup";
+import { MlbRoster } from "@/components/overlay/mlb/mlb-roster";
+import { MlbTicker } from "@/components/overlay/mlb/mlb-ticker";
 import { useEditorStore } from "@/lib/store/editor-store";
 import type { Sport } from "@/types";
 import { cn } from "@/lib/utils";
@@ -42,8 +50,24 @@ export function OverlayCanvas({
           Modo diseño — datos de ejemplo
         </div>
       )}
-      {sport === "nba" && <NbaScorebug widgetFilter={widget} />}
-      {sport === "mlb" && <MlbScoreboard widgetFilter={widget} />}
+      {sport === "nba" && (
+        <>
+          <NbaScorebug widgetFilter={widget} />
+          <NbaPlayerCard widgetFilter={widget} />
+          <NbaQuintet widgetFilter={widget} />
+          <NbaHighlight widgetFilter={widget} />
+        </>
+      )}
+      {sport === "mlb" && (
+        <>
+          <MlbScoreboard widgetFilter={widget} />
+          <MlbLineScore widgetFilter={widget} />
+          <MlbBases widgetFilter={widget} />
+          <MlbMatchup widgetFilter={widget} />
+          <MlbRoster widgetFilter={widget} />
+          <MlbTicker widgetFilter={widget} />
+        </>
+      )}
     </div>
   );
 }

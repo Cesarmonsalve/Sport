@@ -2,6 +2,8 @@ export type Sport = "nba" | "mlb";
 
 export type EditorMode = "simple" | "advanced";
 
+export type WidgetAnimation = "none" | "fade" | "slide";
+
 export type ElementStyle = Partial<{
   left: string;
   top: string;
@@ -14,6 +16,7 @@ export type ElementStyle = Partial<{
   backgroundColor: string;
   textShadow: string;
   borderRadius: string;
+  animation: WidgetAnimation;
 }>;
 
 export interface StreamSportsState {
@@ -31,6 +34,24 @@ export interface StreamSportsState {
   ts?: number;
 }
 
+export interface NbaPlayer {
+  id: string;
+  name: string;
+  jersey?: string;
+  headshot?: string;
+  position?: string;
+  points?: number;
+  rebounds?: number;
+  assists?: number;
+}
+
+export interface NbaRotationEvent {
+  team: "home" | "away";
+  playerIn: NbaPlayer;
+  playerOut?: NbaPlayer;
+  ts: number;
+}
+
 export interface NbaGameSnapshot {
   scoreHome: number;
   scoreAway: number;
@@ -41,6 +62,34 @@ export interface NbaGameSnapshot {
   awayAbbr: string;
   homeLogo?: string;
   awayLogo?: string;
+  foulsHome?: number;
+  foulsAway?: number;
+  bonusHome?: boolean;
+  bonusAway?: boolean;
+  featuredPlayer?: NbaPlayer;
+  onCourtHome?: NbaPlayer[];
+  onCourtAway?: NbaPlayer[];
+  lastRotation?: NbaRotationEvent;
+}
+
+export interface MlbLineScore {
+  away: number[];
+  home: number[];
+  inningLabels: string[];
+}
+
+export interface MlbPlayer {
+  id: string;
+  name: string;
+  jersey?: string;
+  headshot?: string;
+  position?: string;
+  avg?: string;
+}
+
+export interface MlbPlayItem {
+  text: string;
+  inning?: string;
 }
 
 export interface MlbGameSnapshot {
@@ -50,6 +99,18 @@ export interface MlbGameSnapshot {
   inningHalf: string;
   homeAbbr: string;
   awayAbbr: string;
+  homeLogo?: string;
+  awayLogo?: string;
+  linescore?: MlbLineScore;
+  balls?: number;
+  strikes?: number;
+  outs?: number;
+  bases?: { first: boolean; second: boolean; third: boolean };
+  pitcher?: MlbPlayer;
+  batter?: MlbPlayer;
+  rosterAway?: MlbPlayer[];
+  rosterHome?: MlbPlayer[];
+  lastPlays?: MlbPlayItem[];
 }
 
 export interface RegistryEntry {

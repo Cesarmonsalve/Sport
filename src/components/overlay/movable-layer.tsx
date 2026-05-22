@@ -1,8 +1,9 @@
 "use client";
 
 import { type ReactNode, useCallback } from "react";
+import { motion, type TargetAndTransition } from "framer-motion";
 import { useEditorStore } from "@/lib/store/editor-store";
-import type { ElementStyle } from "@/types";
+import type { WidgetAnimation } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface MovableLayerProps {
@@ -12,6 +13,15 @@ interface MovableLayerProps {
   editable?: boolean;
   groupParent?: string;
 }
+
+const animVariants: Record<
+  WidgetAnimation,
+  { initial: TargetAndTransition; animate: TargetAndTransition }
+> = {
+  none: { initial: {}, animate: {} },
+  fade: { initial: { opacity: 0 }, animate: { opacity: 1 } },
+  slide: { initial: { opacity: 0, x: -24 }, animate: { opacity: 1, x: 0 } },
+};
 
 export function MovableLayer({
   id,
@@ -32,6 +42,8 @@ export function MovableLayer({
   const style = elements[id] ?? {};
   const visible = visibility[id] !== false;
   const isSelected = selectedId === id;
+  const animation = (style.animation ?? "none") as WidgetAnimation;
+  const variant = animVariants[animation] ?? animVariants.none;
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -44,11 +56,9 @@ export function MovableLayer({
       const baseTop = parseFloat(pos?.top ?? style.top ?? "0") || 0;
 
       const onMove = (ev: PointerEvent) => {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
         setPosition(id, {
-          left: `${baseLeft + dx}px`,
-          top: `${baseTop + dy}px`,
+          left: `${baseLeft + ev.clientX - startX}px`,
+          top: `${baseTop + ev.clientY - startY}px`,
         });
       };
       const onUp = () => {
@@ -58,7 +68,7 @@ export function MovableLayer({
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [editable, id, pos, style, setPosition, setSelectedId]
+    [editable, id, pos?.left, pos?.top, style.left, style.top, setPosition, setSelectedId]
   );
 
   const merged: React.CSSProperties = {
@@ -79,27 +89,31 @@ export function MovableLayer({
 
   if (!visible && !designMode) return null;
 
+  const shared = {
+    "data-editable": id,
+    className: cn(
+      "ss-movable",
+      !visible && "ss-hidden-widget",
+      isSelected && editable && "ss-selected",
+      className
+    ),
+    style: merged,
+    onPointerDown,
+    tabIndex: editable ? 0 : undefined,
+  };
+
+  if (animation === "none") {
+    return <div {...shared}>{children}</div>;
+  }
+
   return (
-    <div
-      data-editable={id}
-      className={cn(
-        "ss-movable",
-        !visible && "ss-hidden-widget",
-        isSelected && editable && "ss-selected",
-        className
-      )}
-      style={merged}
-      onPointerDown={onPointerDown}
-      tabIndex={editable ? 0 : undefined}
+    <motion.div
+      {...shared}
+      initial={variant.initial}
+      animate={variant.animate}
+      transition={{ duration: 0.35 }}
     >
       {children}
-    </div>
+    </motion.div>
   );
-}
-
-export function mergeStyles(
-  base: ElementStyle,
-  override?: ElementStyle
-): ElementStyle {
-  return { ...base, ...override };
 }

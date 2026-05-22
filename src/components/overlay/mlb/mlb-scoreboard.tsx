@@ -1,7 +1,17 @@
 "use client";
 
 import { MovableLayer } from "@/components/overlay/movable-layer";
+import { widgetOnly } from "@/lib/overlay/widget-filter";
 import { useEditorStore } from "@/lib/store/editor-store";
+
+const SCOREBOARD_IDS = [
+  "scoreboard",
+  "sb-sc-v",
+  "sb-sc-h",
+  "sb-abbr-v",
+  "sb-abbr-h",
+  "sb-inn-n",
+];
 
 interface MlbScoreboardProps {
   widgetFilter?: string | null;
@@ -10,13 +20,7 @@ interface MlbScoreboardProps {
 export function MlbScoreboard({ widgetFilter }: MlbScoreboardProps) {
   const game = useEditorStore((s) => s.mlbGame);
 
-  if (
-    widgetFilter &&
-    widgetFilter !== "scoreboard" &&
-    !widgetFilter.startsWith("sb-")
-  ) {
-    return null;
-  }
+  if (!widgetOnly(widgetFilter, SCOREBOARD_IDS)) return null;
 
   const show = (id: string) =>
     !widgetFilter || widgetFilter === id || widgetFilter === "scoreboard";

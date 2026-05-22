@@ -1,8 +1,7 @@
 "use client";
 
 import { useEditorStore } from "@/lib/store/editor-store";
-import { useNbaScoreboard } from "@/hooks/use-nba-scoreboard";
-import { useMlbScoreboard } from "@/hooks/use-mlb-scoreboard";
+import { useEspnPoll } from "@/hooks/use-espn-poll";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { Sport } from "@/types";
@@ -16,9 +15,7 @@ export function EditorDock({ sport }: EditorDockProps) {
   const setEventId = useEditorStore((s) => s.setEventId);
   const designMode = useEditorStore((s) => s.designMode);
 
-  const nba = useNbaScoreboard();
-  const mlb = useMlbScoreboard();
-  const { events, isLoading, refetch } = sport === "nba" ? nba : mlb;
+  const { events, isLoading, refetch } = useEspnPoll(sport);
 
   return (
     <div className="flex h-12 shrink-0 items-center gap-4 border-t border-border bg-card px-4">
