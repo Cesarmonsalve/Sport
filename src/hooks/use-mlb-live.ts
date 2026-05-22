@@ -14,6 +14,7 @@ import {
 } from "@/lib/espn/gallery";
 import { preloadTeamLogos } from "@/lib/espn/logos";
 import { useEditorStore } from "@/lib/store/editor-store";
+import { loadAppSettings } from "@/lib/settings/app-settings";
 
 function isLiveState(state?: string) {
   return state === "in" || state === "post";
@@ -33,7 +34,9 @@ export function useMlbLive(events: EspnMlbEvent[]) {
     queryKey: ["mlb-summary", eventId],
     queryFn: () => fetchMlbSummary(eventId!),
     enabled: !designMode && sport === "mlb" && !!eventId,
-    refetchInterval: live ? 5_000 : 20_000,
+    refetchInterval: live
+      ? Math.max(4000, Math.floor(loadAppSettings().pollIntervalLiveMs / 2))
+      : loadAppSettings().pollIntervalIdleMs,
     staleTime: 8_000,
     gcTime: 120_000,
   });

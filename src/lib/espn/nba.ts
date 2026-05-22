@@ -194,9 +194,13 @@ export function parseNbaSummary(
   const foulsHome = statVal(comp, "home", "fouls") ?? statVal(comp, "home", "totalFouls");
   const foulsAway = statVal(comp, "away", "fouls") ?? statVal(comp, "away", "totalFouls");
   const logos = logosFromCompetitors(comp);
+  const possRaw = (sit?.possession ?? "").toString().toLowerCase();
+  const possession: "home" | "away" | undefined =
+    possRaw === "home" ? "home" : possRaw === "away" ? "away" : undefined;
 
   return {
     ...base,
+    possession: possession ?? base.possession,
     homeLogo: logos.home ?? base.homeLogo,
     awayLogo: logos.away ?? base.awayLogo,
     clock: clock || base.clock,

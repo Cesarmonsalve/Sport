@@ -20,6 +20,7 @@ import { MlbRoster } from "@/components/overlay/mlb/mlb-roster";
 import { MlbTicker } from "@/components/overlay/mlb/mlb-ticker";
 import { MlbFieldPositions } from "@/components/overlay/mlb/mlb-field-positions";
 import { MlbWebcamFrames } from "@/components/overlay/mlb/mlb-webcam-frames";
+import { SponsorTicker } from "@/components/overlay/sponsor-ticker";
 import { useEditorStore } from "@/lib/store/editor-store";
 import type { Sport } from "@/types";
 import { cn } from "@/lib/utils";
@@ -82,6 +83,7 @@ export const OverlayCanvas = memo(function OverlayCanvas({
           <NbaHighlight widgetFilter={widget} interactive={interactive} />
           <NbaWebcamPanel widgetFilter={widget} interactive={interactive} />
           <NbaSocialFooter widgetFilter={widget} interactive={interactive} />
+          <SponsorTicker widgetFilter={widget} interactive={interactive} />
         </>
       )}
       {sport === "mlb" && (
@@ -96,6 +98,7 @@ export const OverlayCanvas = memo(function OverlayCanvas({
           <MlbRoster widgetFilter={widget} interactive={interactive} />
           <MlbTicker widgetFilter={widget} interactive={interactive} />
           <MlbWebcamFrames widgetFilter={widget} interactive={interactive} />
+          <SponsorTicker widgetFilter={widget} interactive={interactive} />
         </>
       )}
     </div>

@@ -27,6 +27,8 @@ export interface WidgetDisplaySettings {
   showName?: boolean;
   markerStyle?: MarkerStyle;
   markerShowPhoto?: boolean;
+  /** Rotating sponsor lines for sponsor-ticker widget */
+  sponsorLines?: string[];
 }
 
 export type FreeElementType =
@@ -183,6 +185,8 @@ export interface NbaGameSnapshot {
   onCourtHome?: NbaPlayer[];
   onCourtAway?: NbaPlayer[];
   lastRotation?: NbaRotationEvent;
+  /** ESPN situation.possession — home | away */
+  possession?: "home" | "away";
 }
 
 export interface MlbLineScore {

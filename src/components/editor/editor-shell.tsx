@@ -6,8 +6,8 @@ import { EditorSidebar } from "@/components/editor/editor-sidebar";
 import { EditorInspector } from "@/components/editor/editor-inspector";
 import { EditorCanvasPreview } from "@/components/editor/editor-canvas-preview";
 import { EditorHeader } from "@/components/editor/editor-header";
-import { EditorDock } from "@/components/editor/editor-dock";
-import { EditorThemeBar } from "@/components/editor/editor-theme-bar";
+import { ProductionDock } from "@/components/editor/production-dock";
+import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
 import { EditorTemplateSelector } from "@/components/editor/editor-template-selector";
 import { EditorContextMenu } from "@/components/editor/editor-context-menu";
 import { RotationToast } from "@/components/editor/rotation-toast";
@@ -32,6 +32,9 @@ export function EditorShell({ sport }: EditorShellProps) {
     setSport(sport);
     const event = searchParams.get("event");
     if (event) useEditorStore.getState().setEventId(event);
+    if (searchParams.get("design") === "1") {
+      useEditorStore.getState().setDesignMode(true);
+    }
     const s = useEditorStore.getState();
     if (s.designMode) {
       s.setGalleryPlayers(
@@ -52,8 +55,8 @@ export function EditorShell({ sport }: EditorShellProps) {
         <EditorInspector sport={sport} />
       </div>
       <EditorTemplateSelector />
-      <EditorDock sport={sport} />
-      <EditorThemeBar />
+      <ProductionDock sport={sport} room={room} />
+      <OnboardingModal />
       <EditorContextMenu />
       <RotationToast />
       <SelectionFloatingToolbar />

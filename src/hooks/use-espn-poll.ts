@@ -10,6 +10,14 @@ export function useEspnPoll(sport: Sport) {
   const designMode = useEditorStore((s) => s.designMode);
   const nba = useNbaScoreboard();
   const mlb = useMlbScoreboard();
-  if (designMode) return { events: [], isLoading: false, refetch: () => {} };
+  if (designMode) {
+    return {
+      events: [],
+      isLoading: false,
+      isFetching: false,
+      dataUpdatedAt: 0,
+      refetch: () => {},
+    };
+  }
   return sport === "nba" ? nba : mlb;
 }

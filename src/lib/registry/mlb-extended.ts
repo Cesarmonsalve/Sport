@@ -42,4 +42,7 @@ export const MLB_EXTENDED: Record<string, RegistryEntry> = {
     compound: true,
     defaults: { left: "1380px", top: "560px", width: "500px", height: "380px" },
   }),
+  "sponsor-ticker": e("sponsor-ticker", "Patrocinadores (rotación)", "Patrocinio", {
+    defaults: { left: "640px", top: "980px", width: "640px" },
+  }),
 };

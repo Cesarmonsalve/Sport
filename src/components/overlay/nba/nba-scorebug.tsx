@@ -85,6 +85,14 @@ export const NbaScorebug = memo(function NbaScorebug({
           >
             {clockLabel}
           </span>
+          {game.possession && (
+            <span
+              className="ml-2 inline-block rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-amber-300"
+              title="Posesión"
+            >
+              {game.possession === "home" ? "● " + game.homeAbbr : "● " + game.awayAbbr}
+            </span>
+          )}
         </MovableLayer>
       )}
       {show("shot-clock") && visibility["shot-clock"] !== false && (

@@ -17,6 +17,7 @@ import {
 import { preloadTeamLogos } from "@/lib/espn/logos";
 import { mergeNbaPlayersToSlots } from "@/lib/espn/player-slots";
 import { useEditorStore } from "@/lib/store/editor-store";
+import { loadAppSettings } from "@/lib/settings/app-settings";
 
 function isLiveState(state?: string) {
   return state === "in" || state === "post";
@@ -40,7 +41,9 @@ export function useNbaLive(events: EspnNbaEvent[]) {
     queryKey: ["nba-summary", eventId],
     queryFn: () => fetchNbaSummary(eventId!),
     enabled: !designMode && sport === "nba" && !!eventId,
-    refetchInterval: live ? 5_000 : 20_000,
+    refetchInterval: live
+      ? Math.max(4000, Math.floor(loadAppSettings().pollIntervalLiveMs / 2))
+      : loadAppSettings().pollIntervalIdleMs,
     staleTime: 8_000,
     gcTime: 120_000,
   });

@@ -5,6 +5,7 @@ import { fetchNbaScoreboard, type EspnNbaEvent } from "@/lib/espn/nba";
 import { useEditorStore } from "@/lib/store/editor-store";
 import { useEffect } from "react";
 import { useNbaLive } from "@/hooks/use-nba-live";
+import { loadAppSettings } from "@/lib/settings/app-settings";
 
 function isLiveState(state?: string) {
   return state === "in";
@@ -20,9 +21,10 @@ export function useNbaScoreboard() {
     queryKey: ["nba-scoreboard"],
     queryFn: () => fetchNbaScoreboard(),
     refetchInterval: designMode ? false : (q) => {
+      const { pollIntervalLiveMs, pollIntervalIdleMs } = loadAppSettings();
       const events = q.state.data ?? [];
       const sel = events.find((e) => e.id === eventId) ?? events[0];
-      return isLiveState(sel?.state) ? 12_000 : 30_000;
+      return isLiveState(sel?.state) ? pollIntervalLiveMs : pollIntervalIdleMs;
     },
     enabled: !designMode && sport === "nba",
     staleTime: 12_000,
@@ -41,6 +43,8 @@ export function useNbaScoreboard() {
   return {
     events,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    dataUpdatedAt: query.dataUpdatedAt,
     error: query.error,
     refetch: query.refetch,
   };

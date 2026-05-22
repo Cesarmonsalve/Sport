@@ -49,6 +49,9 @@ export const NBA_EXTENDED: Record<string, RegistryEntry> = {
     compound: true,
     defaults: { left: "0", top: "1020px", width: "1920px", height: "48px" },
   }),
+  "sponsor-ticker": e("sponsor-ticker", "Patrocinadores (rotación)", "Patrocinio", {
+    defaults: { left: "640px", top: "980px", width: "640px" },
+  }),
   "timeouts-bar": e("timeouts-bar", "Timeouts", "Marcador · situación", {
     parent: "nba-scorebug",
     defaults: { left: "400px", top: "110px", fontSize: "12px" },

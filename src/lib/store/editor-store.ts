@@ -25,6 +25,8 @@ import { MLB_MOCK_GAME } from "@/lib/espn/mlb";
 import { NBA_REGISTRY } from "@/lib/registry/nba";
 import { MLB_REGISTRY } from "@/lib/registry/mlb";
 import type { ThemeExport } from "@/lib/theme/io";
+import { getSceneById } from "@/lib/scenes/broadcast-scenes";
+import { getTemplateById } from "@/lib/templates";
 
 function defaultPositions(sport: Sport): Record<string, { left: string; top: string }> {
   const reg = sport === "nba" ? NBA_REGISTRY : MLB_REGISTRY;
@@ -144,6 +146,7 @@ interface EditorStore {
   importState: (state: Partial<StreamSportsState>) => void;
   importTheme: (theme: ThemeExport) => void;
   applyStreamTemplate: (t: StreamTemplate) => void;
+  applyBroadcastScene: (sceneId: string) => void;
   setLocked: (id: string, locked: boolean) => void;
   bringForward: (id: string) => void;
   sendBackward: (id: string) => void;
@@ -184,6 +187,9 @@ const DEFAULT_WIDGET_SETTINGS: Record<string, WidgetDisplaySettings> = {
   "roster-widget": { lineupPreset: "name-photo" },
   "court-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
   "field-positions-widget": { markerStyle: "photo", markerShowPhoto: true },
+  "sponsor-ticker": {
+    sponsorLines: ["Patrocinador A", "Patrocinador B", "stream-sports.live"],
+  },
 };
 
 function applyHistorySnap(
@@ -581,6 +587,16 @@ export const useEditorStore = create<EditorStore>()(
           elements,
           dirtyIds: [...new Set([...s.dirtyIds, ...Object.keys(t.positions)])],
         });
+      },
+      applyBroadcastScene: (sceneId) => {
+        const s = get();
+        const scene = getSceneById(s.sport, sceneId);
+        if (!scene) return;
+        const tpl = getTemplateById(s.sport, scene.templateId);
+        if (tpl) get().applyStreamTemplate(tpl);
+        for (const [id, visible] of Object.entries(scene.visibility)) {
+          get().setVisibility(id, visible);
+        }
       },
       setLocked: (id, locked) =>
         set((s) => ({
